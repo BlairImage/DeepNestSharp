@@ -115,8 +115,8 @@
           return 0;
         }
 
-        var maxx = this.points.Max(z => z.X);
-        var minx = this.points.Min(z => z.X);
+        var maxx = Math.Abs(MaxX);
+        var minx = Math.Abs(MinX);
 
         return maxx - minx;
       }
@@ -133,8 +133,8 @@
           return 0;
         }
 
-        var maxy = this.points.Max(z => z.Y);
-        var miny = this.points.Min(z => z.Y);
+        var maxy = Math.Abs(MaxY);
+        var miny = Math.Abs(MinY);
         return maxy - miny;
       }
     }
