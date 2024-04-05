@@ -11,6 +11,7 @@
     private List<LocalContour<TSourceEntity>> outers = new List<LocalContour<TSourceEntity>>();
 
     public IReadOnlyCollection<ILocalContour> Outers => outers;
+    public bool IsIncluded { get; set; } = true;
 
     public RectangleF BoundingBox()
     {

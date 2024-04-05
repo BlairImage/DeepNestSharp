@@ -32,6 +32,6 @@
 
     public HashSet<TSourceEntity> Entities { get; } = new HashSet<TSourceEntity>();
 
-    public bool IsChild { get; internal set; } = true;
+    public bool IsChild { get; set; } = false;
   }
 }

@@ -8,6 +8,8 @@
     string Name { get; }
 
     IReadOnlyCollection<ILocalContour> Outers { get; }
+    
+    bool IsIncluded { get; set; }
 
     bool TryConvertToNfp(int src, out INfp loadedNfp);
 

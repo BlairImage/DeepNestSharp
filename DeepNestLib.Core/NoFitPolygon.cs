@@ -291,15 +291,6 @@
       }
     }
 
-    public static INfp FromDxf(List<DxfEntity> dxfEntities)
-    {
-      IRawDetail raw;
-      raw = DxfParser.ConvertDxfToRawDetail(string.Empty, dxfEntities);
-      INfp result;
-      raw.TryConvertToNfp(0, out result);
-      return result;
-    }
-
     /// <inheritdoc />
     public void AddPoint(SvgPoint point)
     {
@@ -671,14 +662,6 @@
       var result = new DxfFile();
       result.Entities.Add(ToDxfPolyLine());
       return result;
-    }
-
-    internal static INfp FromDxf(DxfPolyline dxfPolyline)
-    {
-      return FromDxf(new List<DxfEntity>()
-      {
-        dxfPolyline,
-      });
     }
 
     internal DxfPolyline ToDxfPolyLine()

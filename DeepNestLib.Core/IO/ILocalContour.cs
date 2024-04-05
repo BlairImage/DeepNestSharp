@@ -6,6 +6,6 @@
   public interface ILocalContour
   {
     List<PointF> Points { get; }
-    bool IsChild { get; }
+    bool IsChild { get; set; }
   }
 }

@@ -8,7 +8,7 @@
 
   public class NestExecutionHelper
   {
-    public void InitialiseNest(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<IDetailLoadInfo> detailLoadInfos, IProgressDisplayer progressDisplayer)
+    public void InitialiseNest(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<IRawDetail> rawDetails, IProgressDisplayer progressDisplayer)
     {
       progressDisplayer.IsVisibleSecondaryProgressBar = false;
       context.Reset();
@@ -26,13 +26,9 @@
 
       context.ReorderSheets();
       src = 0;
-      foreach (var item in detailLoadInfos.Where(o => o.IsIncluded))
+      foreach (var detail in rawDetails.Where(o => o.IsIncluded))
       {
-        progressDisplayer.DisplayTransientMessage($"Preload {item.Path}. . .");
-        var det = LoadRawDetail(new FileInfo(item.Path));
-
-        AddToPolygons(context, src, det, item.Quantity, progressDisplayer, isPriority: item.IsPriority, isMultiplied: item.IsMultiplied, strictAngles: item.StrictAngle);
-
+        AddToPolygons(context, src, detail, 1, progressDisplayer, detail.IsIncluded, false, true, AnglesEnum.Rotate90); // todo the last few parameters are hardcoded and temporary
         src++;
       }
 
@@ -62,22 +58,6 @@
       {
         progressDisplayer.DisplayMessageBox($"Failed to import {det.Name}.", "Load Error", MessageBoxIcon.Stop);
       }
-    }
-
-    public IRawDetail LoadRawDetail(FileInfo f)
-    {
-      IRawDetail det = null;
-      if (f.Extension == ".svg")
-      {
-        det = SvgParser.LoadSvg(f.FullName);
-      }
-
-      if (f.Extension == ".dxf")
-      {
-        det = DxfParser.LoadDxfFile(f.FullName).Result;
-      }
-
-      return det;
     }
   }
 }

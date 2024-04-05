@@ -128,7 +128,7 @@
             else
 #endif
             {
-              fl = DxfParser.ConvertDxfToRawDetail(polygon.Name, DxfFile.Load(polygon.Name).Entities.ToArray());
+              // fl = DxfParser.ConvertDxfToRawDetail(polygon.Name, DxfFile.Load(polygon.Name).Entities.ToArray()).First();
             }
           }
           catch
@@ -140,12 +140,13 @@
         var sheetXoffset = -sheet.WidthCalculated * i;
         //double sheetYoffset = -sheet.Height * i;
         DxfPoint offsetdistance = new DxfPoint(polygon.X + sheetXoffset, polygon.Y, 0D);
-        List<DxfEntity> newlist = OffsetToNest(fl.Outers, offsetdistance, polygon.Rotation, differentiateChildren);
-        foreach (DxfEntity ent in newlist)
-        {
-          yield return ent;
-        }
+        // List<DxfEntity> newlist = OffsetToNest(fl.Outers, offsetdistance, polygon.Rotation, differentiateChildren);
+        // foreach (DxfEntity ent in newlist)
+        // {
+        //   yield return ent;
+        // }
       }
+      return null;
     }
 
     private static List<DxfEntity> OffsetToNest(IEnumerable<ILocalContour> contours, DxfPoint offsetdistance, double rotation, bool differentiateChildren)

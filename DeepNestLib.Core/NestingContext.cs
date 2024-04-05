@@ -273,7 +273,7 @@
         }
         else if (path.ToLower().EndsWith("dxf"))
         {
-          r = DxfParser.LoadDxfFile(path).Result;
+          // r = DxfParser.LoadDxfFile(path).Result;
         }
         else
         {
