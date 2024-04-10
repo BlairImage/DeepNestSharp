@@ -1,15 +1,18 @@
 ﻿namespace DeepNestLib.IO
 {
-  using DeepNestLib.GeneticAlgorithm;
   using System.Collections.Generic;
+  using GeneticAlgorithm;
+  using NestProject;
 
   public interface IRawDetail
   {
     string Name { get; }
 
     IReadOnlyCollection<ILocalContour> Outers { get; }
-    
+
     bool IsIncluded { get; set; }
+
+    AnglesEnum StrictAngle { get; set; }
 
     bool TryConvertToNfp(int src, out INfp loadedNfp);
 

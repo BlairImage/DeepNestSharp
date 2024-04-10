@@ -28,7 +28,7 @@
       src = 0;
       foreach (var detail in rawDetails.Where(o => o.IsIncluded))
       {
-        AddToPolygons(context, src, detail, 1, progressDisplayer, detail.IsIncluded, false, true, AnglesEnum.Rotate90); // todo the last few parameters are hardcoded and temporary
+        AddToPolygons(context, src, detail, 1, progressDisplayer, detail.IsIncluded, false, true, detail.StrictAngle);
         src++;
       }
 

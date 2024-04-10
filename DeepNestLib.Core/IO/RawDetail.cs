@@ -4,35 +4,18 @@
   using System.Drawing;
   using System.Drawing.Drawing2D;
   using System.Linq;
-  using DeepNestLib.GeneticAlgorithm;
+  using GeneticAlgorithm;
+  using NestProject;
 
   public class RawDetail<TSourceEntity> : IRawDetail
   {
-    private List<LocalContour<TSourceEntity>> outers = new List<LocalContour<TSourceEntity>>();
+    private readonly List<LocalContour<TSourceEntity>> outers = new();
 
     public IReadOnlyCollection<ILocalContour> Outers => outers;
+
     public bool IsIncluded { get; set; } = true;
 
-    public RectangleF BoundingBox()
-    {
-      GraphicsPath gp = new GraphicsPath();
-      foreach (var item in Outers)
-      {
-        gp.AddPolygon(item.Points.ToArray());
-      }
-
-      return gp.GetBounds();
-    }
-
-    public void AddContour(LocalContour<TSourceEntity> contour)
-    {
-      outers.Add(contour);
-    }
-
-    public void AddRangeContour(IEnumerable<LocalContour<TSourceEntity>> collection)
-    {
-      outers.AddRange(collection);
-    }
+    public AnglesEnum StrictAngle { get; set; } = AnglesEnum.AsPreviewed;
 
     public string Name { get; set; }
 
@@ -69,21 +52,15 @@
       return result;
     }
 
-    public (INfp, double) ToChromosome()
-    {
-      INfp nfp = ToNfp();
-      return (nfp, nfp.Rotation);
-    }
-
     public INfp ToNfp()
     {
       NoFitPolygon result = null;
-      List<NoFitPolygon> nfps = new List<NoFitPolygon>();
-      foreach (var item in Outers)
+      List<NoFitPolygon> nfps = new();
+      foreach (ILocalContour item in Outers)
       {
-        var nn = new NoFitPolygon();
+        NoFitPolygon nn = new();
         nfps.Add(nn);
-        foreach (var pitem in item.Points)
+        foreach (PointF pitem in item.Points)
         {
           nn.AddPoint(new SvgPoint(pitem.X, pitem.Y));
         }
@@ -91,11 +68,11 @@
 
       if (nfps.Any())
       {
-        var parent = nfps.OrderByDescending(z => z.Area).First();
+        NoFitPolygon parent = nfps.OrderByDescending(z => z.Area).First();
         result = parent; // Reference caution needed here; should be cloning not messing with the original object?
         result.Name = Name;
 
-        foreach (var child in nfps.Where(o => o != parent))
+        foreach (NoFitPolygon child in nfps.Where(o => o != parent))
         {
           if (result.Children == null)
           {
@@ -125,6 +102,33 @@
 
       firstSheet = default;
       return false;
+    }
+
+    public RectangleF BoundingBox()
+    {
+      GraphicsPath gp = new();
+      foreach (ILocalContour item in Outers)
+      {
+        gp.AddPolygon(item.Points.ToArray());
+      }
+
+      return gp.GetBounds();
+    }
+
+    public void AddContour(LocalContour<TSourceEntity> contour)
+    {
+      outers.Add(contour);
+    }
+
+    public void AddRangeContour(IEnumerable<LocalContour<TSourceEntity>> collection)
+    {
+      outers.AddRange(collection);
+    }
+
+    public (INfp, double) ToChromosome()
+    {
+      INfp nfp = ToNfp();
+      return (nfp, nfp.Rotation);
     }
   }
 }
