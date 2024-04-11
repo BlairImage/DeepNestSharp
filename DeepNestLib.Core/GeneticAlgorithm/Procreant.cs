@@ -18,12 +18,25 @@
     private readonly double[] strictAsPreviewedAngles = new double[]
     {
       0,
+    };
+
+    private readonly double[] strictVerticalAngles = new double[]
+    {
+      0,
       180,
+    };
+
+    private readonly double[] strictHorizontalAngles = new double[]
+    {
+      90,
+      270,
     };
 
     private readonly double[] strictRotate90Angles = new double[]
     {
+      0,
       90,
+      180,
       270,
     };
 
@@ -202,14 +215,19 @@
       {
         return strictAsPreviewedAngles[random.Next() % strictAsPreviewedAngles.Length];
       }
-      else if (IsPartRotationRestricted(part, AnglesEnum.Rotate90))
+      if (IsPartRotationRestricted(part, AnglesEnum.Rotate90))
       {
         return strictRotate90Angles[random.Next() % strictRotate90Angles.Length];
       }
-      else
+      if (IsPartRotationRestricted(part, AnglesEnum.Vertical))
       {
-        return Math.Floor(r.NextDouble() * config.Rotations) * (360f / config.Rotations);
+        return strictVerticalAngles[random.Next() % strictVerticalAngles.Length];
       }
+      if (IsPartRotationRestricted(part, AnglesEnum.Horizontal))
+      {
+        return strictHorizontalAngles[random.Next() % strictHorizontalAngles.Length];
+      }
+      return Math.Floor(r.NextDouble() * config.Rotations) * (360f / config.Rotations);
     }
 
     private bool IsPartRotationRestricted(INfp part, AnglesEnum restriction)

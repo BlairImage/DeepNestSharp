@@ -4,6 +4,8 @@
   {
     None = 0x0,
     AsPreviewed = 0x1,
-    Rotate90 = 0x2,
+    Horizontal = 0x2,
+    Vertical = 0x3,
+    Rotate90 = 0x4,
   }
 }
