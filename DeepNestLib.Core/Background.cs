@@ -113,7 +113,7 @@
 
       var holes = new List<INfp>();
 
-      if (holeProvider.Part.Children != null && holeProvider.Part.Children.Count > 0)
+      if (holeProvider.Part.Children != null && holeProvider.Part.Children.Count > 0 && SvgNest.Config.UseHoles)
       {
         for (int j = 0; j < holeProvider.Part.Children.Count; j++)
         {
