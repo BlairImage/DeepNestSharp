@@ -9,9 +9,8 @@
 
   public class RawDetail<TSourceEntity> : IRawDetail
   {
-    private readonly List<LocalContour<TSourceEntity>> outers = new();
 
-    public IReadOnlyCollection<ILocalContour> Outers => outers;
+    public List<ILocalContour> Outers { get; set; } = new();
 
     public bool IsIncluded { get; set; } = true;
 
@@ -117,12 +116,12 @@
 
     public void AddContour(LocalContour<TSourceEntity> contour)
     {
-      outers.Add(contour);
+      Outers.Add(contour);
     }
 
     public void AddRangeContour(IEnumerable<LocalContour<TSourceEntity>> collection)
     {
-      outers.AddRange(collection);
+      Outers.AddRange(collection);
     }
 
     public (INfp, double) ToChromosome()

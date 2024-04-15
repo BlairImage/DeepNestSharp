@@ -8,7 +8,7 @@
   {
     string Name { get; }
 
-    IReadOnlyCollection<ILocalContour> Outers { get; }
+    List<ILocalContour> Outers { get; }
 
     bool IsIncluded { get; set; }
 
