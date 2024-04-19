@@ -91,7 +91,7 @@
         _ = clipper.AddPaths(clipperNfp, ClipperLib.PolyType.ptSubject, true);
         _ = clipper.Execute(ClipperLib.ClipType.ctUnion, combinedNfp, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
 
-        return NfpSimplifier.SimplifyFunction(combinedNfp[0].ToArray().ToNestCoordinates(clipperScale), false, 1, false);
+        return NfpSimplifier.SimplifyFunction(combinedNfp[0].ToArray().ToNestCoordinates(clipperScale), false, SvgNest.Config);
       }
     }
 

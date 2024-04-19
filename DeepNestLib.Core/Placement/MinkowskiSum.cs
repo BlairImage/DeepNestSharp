@@ -191,7 +191,6 @@
             {
               if (ret.Points.Length == 0)
               {
-                System.Diagnostics.Debugger.Break();
                 if (SvgNest.Config.ExportExecutions)
                 {
                   var matchKvp = MinkowskiCache.ToList().First(o => o.Value.Equals(ret));

@@ -37,12 +37,7 @@
       this.procreant = new Procreant(this.NestItems.PartsLocal, config, progressDisplayer);
     }
 
-    public static ISvgNestConfig Config { get; }
-#if NCRUNCH
-    = new TestSvgNestConfig();
-#else
-    = new SvgNestConfig();
-#endif
+    public static ISvgNestConfig Config { get; set; }
 
     public bool IsStopped { get => isStopped; private set => isStopped = value; }
 

@@ -16,6 +16,7 @@
     private const int DelayOnRetry = 1000;
     private const double RemoveThreshold = 10e-5;
     private const double ClosingThreshold = 10e-2;
+    private const double DirectionThreshold = 10e-2;
 
     private static volatile object loadLock = new();
 
@@ -99,6 +100,7 @@
             tempDict.Add(kvp.Key, kvp.Value);
           }
         }
+
         // im thinking I will have to only pass the approximations of the current appro entity
         LocalContour<DxfEntity>[] localContours = ConnectElements(tempDict);
         foreach (LocalContour<DxfEntity> localContour in localContours)
@@ -342,6 +344,8 @@
 
     private static bool TryGetAnotherPoint(PointF prior, List<(DxfEntity Entity, LineElement LineElement)> allLineElements, out (DxfEntity Entity, LineElement LineElement) next)
     {
+      // ((DxfEntity Entity, LineElement LineElement) candidate, double, double) match = allLineElements.Select(candidate => (candidate, MinDistance(prior, candidate), DirectionDifference(prior, candidate))).Where(o => o.Item2 <= ClosingThreshold && o.Item3 <= DirectionThreshold).OrderBy(o => o.Item2)
+      //   .FirstOrDefault();
       ((DxfEntity Entity, LineElement LineElement) candidate, double) match = allLineElements.Select(candidate => (candidate, MinDistance(prior, candidate))).Where(o => o.Item2 <= ClosingThreshold).OrderBy(o => o.Item2)
         .FirstOrDefault();
       if (match != default)
@@ -352,6 +356,23 @@
 
       next = default;
       return false;
+    }
+
+    private static double DirectionDifference(PointF prior, (DxfEntity Entity, LineElement LineElement) candidate)
+    {
+      // Calc the direction of the current line element
+      double currentDir = Math.Atan2(prior.Y - candidate.LineElement.Start.Y, prior.X - candidate.LineElement.Start.X);
+      
+      // Calc the direction of the potential next line element
+      double nextDirStart = Math.Atan2(candidate.LineElement.Start.Y - candidate.LineElement.End.Y, candidate.LineElement.Start.X - candidate.LineElement.End.X);
+      double nextDirEnd = Math.Atan2(candidate.LineElement.End.Y - candidate.LineElement.Start.Y, candidate.LineElement.End.X - candidate.LineElement.Start.X);
+      
+      // calc the difference between the two directions
+      double directionDiffStart = Math.Abs(currentDir - nextDirStart);
+      double directionDiffEnd = Math.Abs(currentDir - nextDirEnd);
+      
+      // return the smallest difference
+      return Math.Min(directionDiffStart, directionDiffEnd);
     }
 
     private static double MinDistance(PointF prior, (DxfEntity Entity, LineElement LineElement) candidate)

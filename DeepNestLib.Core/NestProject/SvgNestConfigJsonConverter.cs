@@ -84,7 +84,6 @@
       target.ClipByHull = source.ClipByHull;
       target.ClipperScale = source.ClipperScale;
       target.CurveTolerance = source.CurveTolerance;
-      target.DrawSimplification = source.DrawSimplification;
       target.ExploreConcave = source.ExploreConcave;
       target.ExportExecutionPath = source.ExportExecutionPath;
       target.ExportExecutions = source.ExportExecutions;
@@ -101,14 +100,10 @@
       target.Rotations = source.Rotations;
       target.SaveAsFileTypeIndex = source.SaveAsFileTypeIndex;
       target.Scale = source.Scale;
-      target.SheetHeight = source.SheetHeight;
-      target.SheetQuantity = source.SheetQuantity;
       target.SheetSpacing = source.SheetSpacing;
-      target.SheetWidth = source.SheetWidth;
       target.ShowPartPositions = source.ShowPartPositions;
       target.Simplify = source.Simplify;
       target.Spacing = source.Spacing;
-      target.StrictAngles = source.StrictAngles;
       target.TimeRatio = source.TimeRatio;
       target.Tolerance = source.Tolerance;
       target.ToleranceSvg = source.ToleranceSvg;

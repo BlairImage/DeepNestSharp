@@ -19,8 +19,6 @@
     /// </summary>
     bool DifferentiateChildren { get; set; }
 
-    bool DrawSimplification { get; set; }
-
     bool ExploreConcave { get; set; }
 
     /// <summary>
@@ -48,13 +46,7 @@
 
     int SaveAsFileTypeIndex { get; set; }
 
-    int SheetHeight { get; set; }
-
-    int SheetQuantity { get; set; }
-
     double SheetSpacing { get; set; }
-
-    int SheetWidth { get; set; }
 
     bool Simplify { get; set; }
 
@@ -80,14 +72,6 @@
     bool UseHoles { get; set; }
 
     bool UseParallel { get; set; }
-
-    /// <summary>
-    /// If set then parts will be restricted to <see cref="StrictAngles"/>.
-    /// If also set on an individual part, part wins.
-    /// AsPreviewed: parts will be restricted to the orientation shown in the part preview (and 180').
-    /// Rotate90: parts will be restricted to the orientation shown in the part preview rotated by +/-90'.
-    /// </summary>
-    AnglesEnum StrictAngles { get; set; }
 
     int Multiplier { get; set; }
 

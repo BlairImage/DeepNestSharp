@@ -21,36 +21,27 @@
 
     public static INfp SimplifyFunction(INfp polygon, bool inside, ISvgNestConfig config)
     {
-      return SimplifyFunction(polygon, inside, config.CurveTolerance, config.Simplify);
-    }
-
-    /// <summary>
-    /// Override specifically added for Tests so the curveTolerance can be passed in.
-    /// </summary>
-    internal static INfp SimplifyFunction(INfp polygon, bool inside, double curveTolerance, bool useHull)
-    {
       var markExact = true;
       var straighten = true;
-      var doSimplify = true;
       var selectiveReversalOfOffset = true;
 
-      var tolerance = 4 * curveTolerance;
+      var tolerance = 4 * config.CurveTolerance;
 
       // give special treatment to line segments above this length (squared)
-      var fixedTolerance = 40 * curveTolerance * 40 * curveTolerance;
+      var fixedTolerance = 40 * config.CurveTolerance * 40 * config.CurveTolerance;
       int j;
 
       var hull = polygon.GetHull();
-      if (useHull)
+      if (!config.Simplify)
       {
-        /*
-        // use convex hull
-        var hull = new ConvexHullGrahamScan();
-        for(var i=0; i<polygon.length; i++){
-            hull.addPoint(polygon[i].x, polygon[i].y);
-        }
+         /*
+         // use convex hull
+         var hull = new ConvexHullGrahamScan();
+         for(var i=0; i<polygon.length; i++){
+             hull.addPoint(polygon[i].x, polygon[i].y);
+         }
 
-        return hull.getHull();*/
+         return hull.getHull();*/
 
         if (hull != null)
         {
@@ -73,13 +64,13 @@
       }
 
       SvgPoint[] resultSource;
-      if (UsePolygonSimplificationCache && PolygonSimplificationCache.TryGetValue(new PolygonSimplificationKey(polygon.Points, curveTolerance, DoSimplifyRadialDist, DoSimplifyDouglasPeucker), out resultSource))
+      if (UsePolygonSimplificationCache && PolygonSimplificationCache.TryGetValue(new PolygonSimplificationKey(polygon.Points, config.CurveTolerance, DoSimplifyRadialDist, DoSimplifyDouglasPeucker), out resultSource))
       {
         return new NoFitPolygon(resultSource);
       }
 
       INfp simple = null;
-      if (doSimplify)
+      if (config.Simplify)
       {
         // polygon to polyline
         var copy = polygon.Slice(0);
@@ -138,7 +129,7 @@
 
       if (markExact)
       {
-        MarkExact(polygon, simple, curveTolerance);
+        MarkExact(polygon, simple, config.CurveTolerance);
       }
 
       var numshells = 4;
@@ -243,8 +234,8 @@
             if ((GeometryUtil.AlmostEqual(s1.X, s2.X) || GeometryUtil.AlmostEqual(s1.Y, s2.Y)) && // we only really care about vertical and horizontal lines
             GeometryUtil.WithinDistance(p1, s1, 2 * tolerance) &&
             GeometryUtil.WithinDistance(p2, s2, 2 * tolerance) &&
-            (!GeometryUtil.WithinDistance(p1, s1, curveTolerance / 1000) ||
-            !GeometryUtil.WithinDistance(p2, s2, curveTolerance / 1000)))
+            (!GeometryUtil.WithinDistance(p1, s1, config.CurveTolerance / 1000) ||
+            !GeometryUtil.WithinDistance(p2, s2, config.CurveTolerance / 1000)))
             {
               p1.X = s1.X;
               p1.Y = s1.Y;
@@ -297,7 +288,7 @@
 
       if (markExact)
       {
-        MarkExactSvg(polygon, offset, curveTolerance);
+        MarkExactSvg(polygon, offset, config.CurveTolerance);
       }
 
       if (!inside && holes != null && holes.Count > 0)
@@ -309,14 +300,18 @@
       {
         lock (cacheSyncLock)
         {
-          if (!PolygonSimplificationCache.ContainsKey(new PolygonSimplificationKey(polygon.Points, curveTolerance, DoSimplifyRadialDist, DoSimplifyDouglasPeucker)))
+          if (!PolygonSimplificationCache.ContainsKey(new PolygonSimplificationKey(polygon.Points, config.CurveTolerance, DoSimplifyRadialDist, DoSimplifyDouglasPeucker)))
           {
-            PolygonSimplificationCache.Add(new PolygonSimplificationKey(polygon.Points, curveTolerance, DoSimplifyRadialDist, DoSimplifyDouglasPeucker), offset.Points);
+            PolygonSimplificationCache.Add(new PolygonSimplificationKey(polygon.Points, config.CurveTolerance, DoSimplifyRadialDist, DoSimplifyDouglasPeucker), offset.Points);
           }
         }
       }
 
       return offset;
+    }
+
+    public static void ClearSimplifyCache()
+    {
     }
 
     /// <summary>
