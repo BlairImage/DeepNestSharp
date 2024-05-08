@@ -2,44 +2,45 @@
 {
   using System;
   using System.Collections.Generic;
-#if NCRUNCH
   using System.Diagnostics;
-#endif
   using System.Linq;
   using System.Threading.Tasks;
   using ClipperLib;
-  using DeepNestLib.GeneticAlgorithm;
-  using DeepNestLib.Geometry;
-  using DeepNestLib.Placement;
+  using GeneticAlgorithm;
+  using Geometry;
+  using Placement;
+#if NCRUNCH
+  using System.Diagnostics;
+#endif
 
-  public partial class SvgNest
+  public class SvgNest
   {
     private readonly IMessageService messageService;
     private readonly IMinkowskiSumService minkowskiSumService;
+    private readonly Procreant procreant;
 
     private readonly IProgressDisplayer progressDisplayer;
-    private readonly Procreant procreant;
 
     private volatile bool isStopped;
 
-    public SvgNest(
-      IMessageService messageService,
-      IProgressDisplayer progressDisplayer,
-      NestState nestState,
-      ISvgNestConfig config,
+    public SvgNest(IMessageService messageService, IProgressDisplayer progressDisplayer, NestState nestState, ISvgNestConfig config,
       (NestItem<INfp>[] PartsLocal, List<NestItem<ISheet>> SheetsLocal) nestItems)
     {
-      this.State = nestState;
+      State = nestState;
       this.messageService = messageService;
       this.progressDisplayer = progressDisplayer;
-      this.minkowskiSumService = MinkowskiSum.CreateInstance(config, nestState);
-      this.NestItems = nestItems;
-      this.procreant = new Procreant(this.NestItems.PartsLocal, config, progressDisplayer);
+      minkowskiSumService = MinkowskiSum.CreateInstance(config, nestState);
+      NestItems = nestItems;
+      procreant = new Procreant(NestItems.PartsLocal, config, progressDisplayer);
     }
 
     public static ISvgNestConfig Config { get; set; }
 
-    public bool IsStopped { get => isStopped; private set => isStopped = value; }
+    public bool IsStopped
+    {
+      get => isStopped;
+      private set => isStopped = value;
+    }
 
     private (NestItem<INfp>[] PartsLocal, List<NestItem<ISheet>> SheetsLocal) NestItems { get; }
 
@@ -47,21 +48,21 @@
 
     internal static INfp CleanPolygon2(INfp polygon)
     {
-      var p = SvgToClipper(polygon);
+      List<IntPoint> p = SvgToClipper(polygon);
 
       // remove self-intersections and find the biggest polygon that's left
-      var simple = ClipperLib.Clipper.SimplifyPolygon(p, ClipperLib.PolyFillType.pftNonZero);
+      List<List<IntPoint>> simple = Clipper.SimplifyPolygon(p, PolyFillType.pftNonZero);
 
       if (simple == null || simple.Count == 0)
       {
         return null;
       }
 
-      var biggest = simple[0];
-      var biggestarea = Math.Abs(ClipperLib.Clipper.Area(biggest));
+      List<IntPoint> biggest = simple[0];
+      var biggestarea = Math.Abs(Clipper.Area(biggest));
       for (var i = 1; i < simple.Count; i++)
       {
-        var area = Math.Abs(ClipperLib.Clipper.Area(simple[i]));
+        var area = Math.Abs(Clipper.Area(simple[i]));
         if (area > biggestarea)
         {
           biggest = simple[i];
@@ -70,20 +71,19 @@
       }
 
       // clean up singularities, coincident points and edges
-      var clean = ClipperLib.Clipper.CleanPolygon(biggest, 0.01 * Config.CurveTolerance * Config.ClipperScale);
+      List<IntPoint> clean = Clipper.CleanPolygon(biggest, 0.01 * Config.CurveTolerance * Config.ClipperScale);
 
       if (clean == null || clean.Count == 0)
       {
         return null;
       }
 
-      var cleaned = ClipperToSvg(clean);
+      NoFitPolygon cleaned = ClipperToSvg(clean);
 
       // remove duplicate endpoints
-      var start = cleaned[0];
-      var end = cleaned[cleaned.Length - 1];
-      if (start == end || (GeometryUtil.AlmostEqual(start.X, end.X)
-          && GeometryUtil.AlmostEqual(start.Y, end.Y)))
+      SvgPoint start = cleaned[0];
+      SvgPoint end = cleaned[cleaned.Length - 1];
+      if (start == end || (GeometryUtil.AlmostEqual(start.X, end.X) && GeometryUtil.AlmostEqual(start.Y, end.Y)))
       {
         cleaned.ReplacePoints(cleaned.Points.Take(cleaned.Points.Count() - 1));
       }
@@ -99,8 +99,8 @@
     // offset tree recursively
     internal static void OffsetTree(ref INfp t, double offset, ISvgNestConfig config, bool? inside = null)
     {
-      var simple = NfpSimplifier.SimplifyFunction(t, (inside == null) ? false : inside.Value, config);
-      var offsetpaths = new INfp[] { simple };
+      INfp simple = NfpSimplifier.SimplifyFunction(t, inside == null ? false : inside.Value, config);
+      INfp[] offsetpaths = { simple };
       if (Math.Abs(offset) > 0)
       {
         offsetpaths = PolygonOffsetDeepNest(simple, offset);
@@ -108,7 +108,7 @@
 
       if (offsetpaths.Count() > 0)
       {
-        List<SvgPoint> rett = new List<SvgPoint>();
+        List<SvgPoint> rett = new();
         rett.AddRange(offsetpaths[0].Points);
         rett.AddRange(t.Points.Skip(t.Length));
         t.ReplacePoints(rett);
@@ -135,8 +135,8 @@
       {
         for (var i = 0; i < t.Children.Count; i++)
         {
-          var child = t.Children[i];
-          OffsetTree(ref child, -offset, config, (inside == null) ? true : (!inside));
+          INfp child = t.Children[i];
+          OffsetTree(ref child, -offset, config, inside == null ? true : !inside);
         }
       }
     }
@@ -150,16 +150,16 @@
         return new[] { polygon };
       }
 
-      var p = SvgToClipper(polygon);
+      List<IntPoint> p = SvgToClipper(polygon);
 
       var miterLimit = 4;
-      var co = new ClipperLib.ClipperOffset(miterLimit, Config.CurveTolerance * Config.ClipperScale);
-      co.AddPath(p.ToList(), ClipperLib.JoinType.jtMiter, ClipperLib.EndType.etClosedPolygon);
+      ClipperOffset co = new(miterLimit, Config.CurveTolerance * Config.ClipperScale);
+      co.AddPath(p.ToList(), JoinType.jtMiter, EndType.etClosedPolygon);
 
-      var newpaths = new List<List<ClipperLib.IntPoint>>();
+      List<List<IntPoint>> newpaths = new();
       co.Execute(ref newpaths, offset * Config.ClipperScale);
 
-      var result = new List<NoFitPolygon>();
+      List<NoFitPolygon> result = new();
       for (var i = 0; i < newpaths.Count; i++)
       {
         result.Add(ClipperToSvg(newpaths[i]));
@@ -170,7 +170,7 @@
 
     internal static NoFitPolygon ClipperToSvg(IList<IntPoint> polygon)
     {
-      List<SvgPoint> ret = new List<SvgPoint>();
+      List<SvgPoint> ret = new();
 
       for (var i = 0; i < polygon.Count; i++)
       {
@@ -182,107 +182,99 @@
 
     internal void Stop()
     {
-      System.Diagnostics.Debug.Print("SvgNest.Stop()");
-      this.IsStopped = true;
+      Debug.Print("SvgNest.Stop()");
+      IsStopped = true;
     }
 
     internal void ResponseProcessor(NestResult payload)
     {
-      try
+      if (procreant == null || payload == null)
       {
-        if (this.procreant == null || payload == null)
-        {
-          // user might have quit while we're away
-          return;
-        }
+        // user might have quit while we're away
+        return;
+      }
 
-        State.IncrementPopulation();
-        State.SetLastNestTime(payload.BackgroundTime);
-        State.SetLastPlacementTime(payload.PlacePartTime);
-        State.IncrementNestCount();
-        State.IncrementPlacementTime(payload.PlacePartTime);
-        State.IncrementNestTime(payload.BackgroundTime);
+      State.IncrementPopulation();
+      State.SetLastNestTime(payload.BackgroundTime);
+      State.SetLastPlacementTime(payload.PlacePartTime);
+      State.IncrementNestCount();
+      State.IncrementPlacementTime(payload.PlacePartTime);
+      State.IncrementNestTime(payload.BackgroundTime);
 
 #if NCRUNCH
         Trace.WriteLine("payload.Index I don't think is being set right; double check before retrying threaded execution.");
 #endif
-        this.procreant.Population[payload.Index].Processing = false;
-        this.procreant.Population[payload.Index].Fitness = payload.Fitness;
+      procreant.Population[payload.Index].Processing = false;
+      procreant.Population[payload.Index].Fitness = payload.Fitness;
 
-        //int currentPlacements = 0;
-        string suffix = string.Empty;
-        if (!payload.IsValid || payload.UsedSheets.Count == 0)
+      //int currentPlacements = 0;
+      var suffix = string.Empty;
+      if (!payload.IsValid || payload.UsedSheets.Count == 0)
+      {
+        State.IncrementRejected();
+        suffix = " Rejected";
+      }
+      else
+      {
+        TryAddResult result = State.TopNestResults.TryAdd(payload);
+        if (result == TryAddResult.Added)
         {
-          this.State.IncrementRejected();
-          suffix = " Rejected";
-        }
-        else
-        {
-          var result = this.State.TopNestResults.TryAdd(payload);
-          if (result == TryAddResult.Added)
+          if (State.TopNestResults.IndexOf(payload) < State.TopNestResults.EliteSurvivors)
           {
-            if (this.State.TopNestResults.IndexOf(payload) < this.State.TopNestResults.EliteSurvivors)
-            {
-              suffix = "Elite";
-              this.progressDisplayer?.UpdateNestsList();
-            }
-            else
-            {
-              suffix = "Top";
-            }
-
-            this.progressDisplayer.DisplayTransientMessage($"New top {this.State.TopNestResults.MaxCapacity} nest found: nesting time = {payload.PlacePartTime}ms");
+            suffix = "Elite";
           }
           else
           {
-            if (result == TryAddResult.Duplicate)
-            {
-              suffix = "Duplicate";
-            }
-            else
-            {
-              suffix = "Sub-optimal";
-            }
-
-            this.progressDisplayer.DisplayTransientMessage($"Nesting time = {payload.PlacePartTime}ms ({suffix})");
+            suffix = "Top";
           }
 
-          IncrementSecondaryProgressBar();
-          if (this.State.TopNestResults.Top.TotalPlacedCount > 0)
-          {
-            progressDisplayer.DisplayProgress(State.Population, State.TopNestResults.Top);
-          }
-
-          System.Diagnostics.Debug.Print($"Nest {payload.BackgroundTime}ms {suffix}");
+          progressDisplayer.DisplayTransientMessage($"New top {State.TopNestResults.MaxCapacity} nest found: nesting time = {payload.PlacePartTime}ms");
         }
-      }
-      catch (Exception ex)
-      {
-        throw;
+        else
+        {
+          if (result == TryAddResult.Duplicate)
+          {
+            suffix = "Duplicate";
+          }
+          else
+          {
+            suffix = "Sub-optimal";
+          }
+
+          progressDisplayer.DisplayTransientMessage($"Nesting time = {payload.PlacePartTime}ms ({suffix})");
+        }
+
+        IncrementSecondaryProgressBar();
+        if (State.TopNestResults.Top.TotalPlacedCount > 0)
+        {
+          progressDisplayer.DisplayProgress(State.Population, State.TopNestResults.Top);
+        }
+
+        Debug.Print($"Nest {payload.BackgroundTime}ms {suffix}");
       }
     }
 
     /// <summary>
-    /// Starts next generation if none started or prior finished. Will keep rehitting the outstanding population
-    /// set up for the generation until all have processed.
+    ///   Starts next generation if none started or prior finished. Will keep rehitting the outstanding population
+    ///   set up for the generation until all have processed.
     /// </summary>
     internal void LaunchWorkers(ISvgNestConfig config, INestStateBackground nestStateBackground)
     {
       try
       {
-        if (!this.IsStopped)
+        if (!IsStopped)
         {
-          if (this.procreant.IsCurrentGenerationFinished)
+          if (procreant.IsCurrentGenerationFinished)
           {
             InitialiseAnotherGeneration();
           }
 
-          var sheets = new List<ISheet>();
+          List<ISheet> sheets = new();
           var sid = 0;
-          for (int i = 0; i < this.NestItems.SheetsLocal.Count(); i++)
+          for (var i = 0; i < NestItems.SheetsLocal.Count(); i++)
           {
-            var poly = this.NestItems.SheetsLocal[i].Polygon;
-            for (int j = 0; j < this.NestItems.SheetsLocal[i].Quantity; j++)
+            ISheet poly = NestItems.SheetsLocal[i].Polygon;
+            for (var j = 0; j < NestItems.SheetsLocal[i].Quantity; j++)
             {
               ISheet clone;
               if (poly is Sheet sheet)
@@ -306,20 +298,18 @@
             }
           }
 
-          this.progressDisplayer.DisplayTransientMessage("Executing Nest. . .");
+          progressDisplayer.DisplayTransientMessage("Executing Nest. . .");
           if (config.UseParallel)
           {
-            var end1 = this.procreant.Population.Length / 3;
-            var end2 = this.procreant.Population.Length * 2 / 3;
-            var end3 = this.procreant.Population.Length;
-            Parallel.Invoke(
-              () => ProcessPopulation(0, end1, config, sheets.ToArray(), nestStateBackground),
-              () => ProcessPopulation(end1, end2, config, sheets.ToArray(), nestStateBackground),
-              () => ProcessPopulation(end2, this.procreant.Population.Length, config, sheets.ToArray(), nestStateBackground));
+            var end1 = procreant.Population.Length / 3;
+            var end2 = procreant.Population.Length * 2 / 3;
+            var end3 = procreant.Population.Length;
+            Parallel.Invoke(() => ProcessPopulation(0, end1, config, sheets.ToArray(), nestStateBackground), () => ProcessPopulation(end1, end2, config, sheets.ToArray(), nestStateBackground),
+              () => ProcessPopulation(end2, procreant.Population.Length, config, sheets.ToArray(), nestStateBackground));
           }
           else
           {
-            ProcessPopulation(0, this.procreant.Population.Length, config, sheets.ToArray(), nestStateBackground);
+            ProcessPopulation(0, procreant.Population.Length, config, sheets.ToArray(), nestStateBackground);
           }
         }
       }
@@ -336,14 +326,14 @@
         }
         else
         {
-          this.messageService.DisplayMessage(badImageEx);
+          messageService.DisplayMessage(badImageEx);
         }
 
         State.SetIsErrored();
       }
       catch (Exception ex)
       {
-        this.messageService.DisplayMessage(ex);
+        messageService.DisplayMessage(ex);
         State.SetIsErrored();
 #if NCRUNCH
         throw;
@@ -351,30 +341,30 @@
       }
       finally
       {
-        this.progressDisplayer.IsVisibleSecondaryProgressBar = false;
+        progressDisplayer.IsVisibleSecondaryProgressBar = false;
       }
     }
 
     // converts a polygon from normal double coordinates to integer coordinates used by clipper, as well as x/y -> X/Y
-    private static List<ClipperLib.IntPoint> SvgToClipper(INfp polygon)
+    private static List<IntPoint> SvgToClipper(INfp polygon)
     {
-      var d = DeepNestClipper.ScaleUpPath(polygon.Points, Config.ClipperScale);
+      List<IntPoint> d = DeepNestClipper.ScaleUpPath(polygon.Points, Config.ClipperScale);
       return d;
     }
 
     private void IncrementSecondaryProgressBar()
     {
-      if (!this.progressDisplayer.IsVisibleSecondaryProgressBar)
+      if (!progressDisplayer.IsVisibleSecondaryProgressBar)
       {
-        this.progressDisplayer.InitialiseLoopProgress(ProgressBar.Secondary, Config.PopulationSize);
+        progressDisplayer.InitialiseLoopProgress(ProgressBar.Secondary, Config.PopulationSize);
       }
 
-      this.progressDisplayer.IncrementLoopProgress(ProgressBar.Secondary);
+      progressDisplayer.IncrementLoopProgress(ProgressBar.Secondary);
     }
 
     private int ToTree(PolygonTreeItem[] list, int idstart = 0)
     {
-      List<PolygonTreeItem> parents = new List<PolygonTreeItem>();
+      List<PolygonTreeItem> parents = new();
       int i, j;
 
       // assign a unique id to each leaf
@@ -383,7 +373,7 @@
 
       for (i = 0; i < list.Length; i++)
       {
-        var p = list[i];
+        PolygonTreeItem p = list[i];
 
         var ischild = false;
         for (j = 0; j < list.Length; j++)
@@ -432,7 +422,7 @@
       {
         if (parents[i].Childs != null)
         {
-          id = this.ToTree(parents[i].Childs.ToArray(), id);
+          id = ToTree(parents[i].Childs.ToArray(), id);
         }
       }
 
@@ -440,16 +430,16 @@
     }
 
     /// <summary>
-    /// All individuals have been evaluated, start next generation
+    ///   All individuals have been evaluated, start next generation
     /// </summary>
     private void InitialiseAnotherGeneration()
     {
-      this.procreant.Generate();
+      procreant.Generate();
 #if !NCRUNCH
-      if (this.procreant.Population.Length == 0)
+      if (procreant.Population.Length == 0)
       {
-        this.Stop();
-        this.messageService.DisplayMessageBox("Terminating the nest because we're just recalculating the same nests over and over again.", "Terminating Nest", MessageBoxIcon.Information);
+        Stop();
+        messageService.DisplayMessageBox("Terminating the nest because we're just recalculating the same nests over and over again.", "Terminating Nest", MessageBoxIcon.Information);
       }
 #endif
 
@@ -459,43 +449,36 @@
 
     private void DisplayMinkowskiDllError()
     {
-      this.messageService.DisplayMessageBox(
-                  "An error has occurred attempting to execute the C++ Minkowski DllImport.\r\n" +
-                  "\r\n" +
-                  "You can turn off the C++ DllImport in Settings and use the internal C# implementation " +
-                  "instead; but this is experimental. Alternatively try using another build (x86/x64) or " +
-                  "recreate the Minkowski.Dlls on your own system.\r\n" +
-                  "\r\n" +
-                  "You can continue to use the import/edit/export functionality but unless you fix " +
-                  "the problem/switch to the internal implementation you will be unable to execute " +
-                  "any nests.",
-                  "DeepNestSharp Error!",
-                  MessageBoxIcon.Error);
+      messageService.DisplayMessageBox(
+        "An error has occurred attempting to execute the C++ Minkowski DllImport.\r\n" + "\r\n" + "You can turn off the C++ DllImport in Settings and use the internal C# implementation " +
+        "instead; but this is experimental. Alternatively try using another build (x86/x64) or " + "recreate the Minkowski.Dlls on your own system.\r\n" + "\r\n" +
+        "You can continue to use the import/edit/export functionality but unless you fix " + "the problem/switch to the internal implementation you will be unable to execute " + "any nests.",
+        "DeepNestSharp Error!", MessageBoxIcon.Error);
     }
 
     private void ProcessPopulation(int start, int end, ISvgNestConfig config, ISheet[] sheets, INestStateBackground nestStateBackground)
     {
       State.IncrementThreads();
-      for (int i = start; i < end; i++)
+      for (var i = start; i < end; i++)
       {
-        if (this.IsStopped)
+        if (IsStopped)
         {
           break;
         }
 
         // if(running < config.threads && !GA.population[i].processing && !GA.population[i].fitness){
         // only one background window now...
-        var individual = procreant.Population[i];
-        if (!this.IsStopped && individual.IsPending)
+        PopulationItem individual = procreant.Population[i];
+        if (!IsStopped && individual.IsPending)
         {
           individual.Processing = true;
-          if (this.IsStopped)
+          if (IsStopped)
           {
-            this.ResponseProcessor(null);
+            ResponseProcessor(null);
           }
           else
           {
-            var background = new Background(this.progressDisplayer, this, minkowskiSumService, nestStateBackground, config.UseDllImport);
+            Background background = new(progressDisplayer, this, minkowskiSumService, nestStateBackground, config.UseDllImport);
             background.BackgroundStart(individual, sheets, config);
           }
         }

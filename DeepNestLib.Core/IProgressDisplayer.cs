@@ -1,12 +1,14 @@
 ﻿namespace DeepNestLib
 {
   using System.Threading.Tasks;
-  using DeepNestLib.Placement;
+  using Placement;
 
   public interface IProgressDisplayer
   {
+    bool IsVisibleSecondaryProgressBar { get; set; }
+
     /// <summary>
-    /// DisplayProgress on a percentage scale.
+    ///   DisplayProgress on a percentage scale.
     /// </summary>
     /// <param name="percentageComplete">A number bettwen 0 (0%) and 1 (100%).</param>
     void DisplayProgress(ProgressBar progressBar, double percentageComplete);
@@ -19,13 +21,7 @@
 
     void DisplayMessageBox(string text, string caption, MessageBoxIcon icon);
 
-    void UpdateNestsList();
-
-    void InitialiseUiForStartNest();
-
     Task IncrementLoopProgress(ProgressBar progressBar);
-
-    bool IsVisibleSecondaryProgressBar { get; set; }
 
     void InitialiseLoopProgress(ProgressBar progressBar, int loopMax);
 
