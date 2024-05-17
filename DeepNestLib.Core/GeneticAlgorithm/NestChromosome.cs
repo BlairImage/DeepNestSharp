@@ -1,22 +1,19 @@
 ﻿namespace DeepNestLib.GeneticAlgorithm
 {
-  using GeneticSharp.Domain.Chromosomes;
-  using GeneticSharp.Domain.Randomizations;
+  using GeneticSharp;
 
   public class NestChromosome : ChromosomeBase
   {
-    public NestChromosome(int numberOfParts)
-      : base(numberOfParts)
-    => CreateGenes();
+    public NestChromosome(int numberOfParts) : base(numberOfParts) => CreateGenes();
 
     public override IChromosome CreateNew()
     {
-      return new NestChromosome(this.Length);
+      return new NestChromosome(Length);
     }
 
     public override Gene GenerateGene(int geneIndex)
     {
-      return new Gene(RandomizationProvider.Current.GetInt(0, this.Length * 50));
+      return new Gene(RandomizationProvider.Current.GetInt(0, Length * 50));
     }
   }
 }

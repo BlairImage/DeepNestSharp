@@ -7,5 +7,7 @@
     int Quantity { get; set; }
 
     int Width { get; set; }
+
+    IMaterial Material { get; set; }
   }
 }

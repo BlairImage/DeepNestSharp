@@ -1,5 +1,6 @@
 ﻿namespace DeepNestLib.IO
 {
+  using System;
   using System.Collections.Generic;
   using System.Drawing;
   using System.Drawing.Drawing2D;
@@ -9,12 +10,13 @@
 
   public class RawDetail<TSourceEntity> : IRawDetail
   {
-
     public List<ILocalContour> Outers { get; set; } = new();
 
     public bool IsIncluded { get; set; } = true;
 
     public AnglesEnum StrictAngle { get; set; } = AnglesEnum.AsPreviewed;
+
+    public int Quantity { get; set; } = 1;
 
     public string Name { get; set; }
 
@@ -101,6 +103,48 @@
 
       firstSheet = default;
       return false;
+    }
+
+    public bool IsCircle()
+    {
+      // calc the centroid of the points
+      PointF centroid = new(Outers.First().Points.Average(z => z.X), Outers.First().Points.Average(z => z.Y));
+
+      // calc the distances from the centroid to each point
+      List<double> distances = Outers.First().Points.Select(z => Math.Sqrt(Math.Pow(z.X - centroid.X, 2) + Math.Pow(z.Y - centroid.Y, 2))).ToList();
+
+      // calc the average distance
+      var avgDistance = distances.Average();
+
+      // check if all distances are within a tolerance of the average distance
+      var tolerance = avgDistance * 0.05; // 5% tolerance
+      return distances.All(d => Math.Abs(d - avgDistance) <= tolerance);
+    }
+
+    public bool IsRectangle()
+    {
+      if (Outers.Count != 1)
+      {
+        return false;
+      }
+
+      // the points of a rectangle are right angles to each other
+      for (var i = 0; i < Outers.First().Points.Count; i++)
+      {
+        PointF p1 = Outers.First().Points[i];
+        PointF p2 = Outers.First().Points[(i + 1) % Outers.First().Points.Count];
+        PointF p3 = Outers.First().Points[(i + 2) % Outers.First().Points.Count];
+
+        PointF v1 = new(p2.X - p1.X, p2.Y - p1.Y);
+        PointF v2 = new(p3.X - p2.X, p3.Y - p2.Y);
+
+        if (v1.X * v2.X + v1.Y * v2.Y != 0)
+        {
+          return false;
+        }
+      }
+
+      return true;
     }
 
     public RectangleF BoundingBox()

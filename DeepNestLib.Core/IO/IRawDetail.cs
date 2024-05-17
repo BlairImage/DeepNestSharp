@@ -14,6 +14,8 @@
 
     AnglesEnum StrictAngle { get; set; }
 
+    int Quantity { get; set; }
+
     bool TryConvertToNfp(int src, out INfp loadedNfp);
 
     bool TryConvertToNfp(int src, out Chromosome chromosome);
@@ -25,5 +27,9 @@
     ISheet ToSheet();
 
     bool TryConvertToNfp(int firstPartIdSrc, int v, out Chromosome firstPart);
+
+    bool IsCircle();
+
+    bool IsRectangle();
   }
 }

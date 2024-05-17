@@ -1,43 +1,92 @@
 ﻿namespace DeepNestLib
 {
   using System.Collections.Generic;
-  using System.IO;
   using System.Linq;
-  using DeepNestLib.IO;
-  using DeepNestLib.NestProject;
+  using IO;
+  using NestProject;
 
   public class NestExecutionHelper
   {
+    private readonly IMaterialCatalog m_materialCatalog;
+
+    public NestExecutionHelper()
+    {
+    }
+
+    public NestExecutionHelper(IMaterialCatalog materialCatalog) => m_materialCatalog = materialCatalog;
+
     public void InitialiseNest(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<IRawDetail> rawDetails, IProgressDisplayer progressDisplayer)
     {
       progressDisplayer.IsVisibleSecondaryProgressBar = false;
       context.Reset();
-      int src = 0;
-      foreach (var item in sheetLoadInfos)
+
+      // sort the sheet sizes by area (width * height) descending
+      List<ISheetLoadInfo> orderedInfos = sheetLoadInfos.OrderByDescending(o => o.Width * o.Height).ToList();
+      sheetLoadInfos.Clear();
+      foreach (ISheetLoadInfo item in orderedInfos)
       {
-        src = context.GetNextSheetSource();
-        for (int i = 0; i < item.Quantity; i++)
-        {
-          var ns = Sheet.NewSheet(context.Sheets.Count + 1, item.Width, item.Height);
-          context.Sheets.Add(ns);
-          ns.Source = src;
-        }
+        sheetLoadInfos.Add(item);
       }
 
-      context.ReorderSheets();
-      src = 0;
-      foreach (var detail in rawDetails.Where(o => o.IsIncluded))
+      // calc the total area of the sheets
+      var totalArea = rawDetails.Sum(detail => detail.ToNfp().Area * detail.Quantity * SvgNest.Config.Multiplier);
+
+      double packingEfficiency;
+      if (rawDetails.All(detail => detail.IsRectangle()))
       {
-        AddToPolygons(context, src, detail, 1, progressDisplayer, detail.IsIncluded, false, true, detail.StrictAngle);
+        packingEfficiency = 0.9; // high efficiency for rectangles
+      }
+      else if (rawDetails.All(detail => detail.IsCircle()))
+      {
+        packingEfficiency = 0.8; // medium efficiency for circles
+      }
+      else
+      {
+        packingEfficiency = 0.7; // low efficiency for other shapes
+      }
+
+      var src = 0;
+      while (totalArea > 0)
+      {
+        ISheetLoadInfo bestFitSheet = m_materialCatalog.SelectBestFitSheet(totalArea, packingEfficiency, sheetLoadInfos.First().Material.Name);
+
+        // if (bestFitSheets.Count == 0)
+        // {
+        //   progressDisplayer.DisplayMessageBox("No sheets available to fit the parts.", "Error", MessageBoxIcon.Error);
+        // }
+        src = context.GetNextSheetSource();
+
+        totalArea -= (bestFitSheet.Width - SvgNest.Config.SheetSpacing * 2) * (bestFitSheet.Height - SvgNest.Config.SheetSpacing * 2) * packingEfficiency;
+
+        Sheet ns = Sheet.NewSheet(context.Sheets.Count + 1, bestFitSheet.Width, bestFitSheet.Height);
+        context.Sheets.Add(ns);
+        ns.Source = src;
+        bestFitSheet.Quantity++;
+
+        context.ReorderSheets();
+
+        progressDisplayer.DisplayTransientMessage(string.Empty);
+      }
+
+      src = 0;
+      foreach (IRawDetail detail in rawDetails.Where(o => o.IsIncluded))
+      {
+        AddToPolygons(context, src, detail, detail.Quantity, progressDisplayer, detail.IsIncluded, false, true, detail.StrictAngle);
         src++;
       }
-
-      progressDisplayer.DisplayTransientMessage(string.Empty);
     }
 
-    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false, bool isMultiplied = false, AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
+    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false, bool isMultiplied = false,
+      AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
     {
-      var item = new DetailLoadInfo() { Quantity = quantity, IsIncluded = isIncluded, IsPriority = isPriority, IsMultiplied = isMultiplied, StrictAngle = strictAngles };
+      DetailLoadInfo item = new()
+      {
+        Quantity = quantity,
+        IsIncluded = isIncluded,
+        IsPriority = isPriority,
+        IsMultiplied = isMultiplied,
+        StrictAngle = strictAngles
+      };
       AddToPolygons(context, src, det, item, progressDisplayer);
     }
 
@@ -49,7 +98,7 @@
         loadedNfp.IsPriority = item.IsPriority;
         loadedNfp.StrictAngle = item.StrictAngle;
         var quantity = item.Quantity * (item.IsMultiplied ? SvgNest.Config.Multiplier : 1);
-        for (int i = 0; i < quantity; i++)
+        for (var i = 0; i < quantity; i++)
         {
           context.Polygons.Add(loadedNfp.Clone());
         }
