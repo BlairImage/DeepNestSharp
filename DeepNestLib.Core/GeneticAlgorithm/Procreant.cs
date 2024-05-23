@@ -26,6 +26,7 @@
       180,
     };
 
+    // this one prob wont be used too much
     private readonly double[] strictHorizontalAngles = new double[]
     {
       90,

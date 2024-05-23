@@ -25,7 +25,7 @@
     public INfp Part { get; private set; }
 
     [JsonInclude]
-    public double Rotation { get; internal set; }
+    public double Rotation { get; set; }
 
     internal void SetIndex(int idx)
     {
