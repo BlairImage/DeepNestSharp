@@ -19,7 +19,7 @@
   <ItemGroup>
     <PackageReference Include="GeneticSharp" Version="3.1.4" />
     <PackageReference Include="GeneticSharp.Extensions" Version="3.1.4" />
-    <PackageReference Include="IxMilia.Dxf" Version="0.8.3" />
+    <PackageReference Include="IxMilia.Dxf" Version="0.8.4" />
     <PackageReference Include="Light.GuardClauses" Version="11.0.0" />
     <PackageReference Include="StyleCop.Analyzers" Version="1.1.118">
       <PrivateAssets>all</PrivateAssets>
