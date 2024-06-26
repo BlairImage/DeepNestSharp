@@ -12,7 +12,6 @@
   public class NestingContext : INestingContext
   {
     private readonly ISvgNestConfig config;
-    private readonly IMessageService messageService;
     private readonly IProgressDisplayer progressDisplayer;
     private readonly NestState state;
     private readonly INestStateBackground stateBackground;
@@ -20,9 +19,10 @@
     private volatile bool isStopped;
     private volatile SvgNest nest;
 
-    public NestingContext(IMessageService messageService, IProgressDisplayer progressDisplayer, NestState state, ISvgNestConfig config)
+    public NestingContext(IMessageService messageService, IDispatcherService dispatcherService, IProgressDisplayer progressDisplayer, NestState state, ISvgNestConfig config)
     {
-      this.messageService = messageService;
+      MessageService = messageService;
+      DispatcherService = dispatcherService;
       this.progressDisplayer = progressDisplayer;
       State = state;
       this.config = config;
@@ -30,6 +30,9 @@
       stateNestingContext = state;
       stateBackground = state;
     }
+    
+    public IMessageService MessageService { get; }
+    public IDispatcherService DispatcherService { get; }
 
     public INestState State { get; }
 
@@ -59,7 +62,7 @@
       (NestItem<INfp>[] PartsLocal, List<NestItem<ISheet>> SheetsLocal) nestItems =
         await Task.Run(() => { return SvgNestInitializer.BuildNestItems(config, Polygons, Sheets, progressDisplayer); }).ConfigureAwait(false);
 
-      Nest = new SvgNest(messageService, progressDisplayer, state, config, nestItems);
+      Nest = new SvgNest(MessageService, progressDisplayer, state, config, nestItems);
       isStopped = false;
     }
 
@@ -102,7 +105,7 @@
         if (!State.IsErrored)
         {
           state.SetIsErrored();
-          messageService.DisplayMessage(ex);
+          MessageService.DisplayMessage(ex);
         }
 
 #if NCRUNCH
