@@ -49,6 +49,7 @@
 
         totalArea -= (bestFitSheet.Width - SvgNest.Config.SheetSpacing * 2) * (bestFitSheet.Height - SvgNest.Config.SheetSpacing * 2) * packingEfficiency;
         Sheet ns = Sheet.NewSheet(context.Sheets.Count + 1, bestFitSheet.Width, bestFitSheet.Height);
+        ns.Material = bestFitSheet.Material;
         context.Sheets.Add(ns);
         ns.Source = src;
         bestFitSheet.Quantity++;
