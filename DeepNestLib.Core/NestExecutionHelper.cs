@@ -50,6 +50,7 @@
         totalArea -= (bestFitSheet.Width - SvgNest.Config.SheetSpacing * 2) * (bestFitSheet.Height - SvgNest.Config.SheetSpacing * 2) * packingEfficiency;
         Sheet ns = Sheet.NewSheet(context.Sheets.Count + 1, bestFitSheet.Width, bestFitSheet.Height);
         ns.Material = bestFitSheet.Material;
+        ns.UniqueId = bestFitSheet.UniqueId;
         context.Sheets.Add(ns);
         ns.Source = src;
         bestFitSheet.Quantity++;
@@ -58,7 +59,7 @@
       }
     }
 
-    public void InitialiseNest<T>(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<T> rawDetails, IProgressDisplayer progressDisplayer) where T : IRawDetail
+    public int InitialiseNest<T>(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<T> rawDetails, IProgressDisplayer progressDisplayer, int src) where T : IRawDetail
     {
       progressDisplayer.IsVisibleSecondaryProgressBar = false;
       context.Reset();
@@ -66,17 +67,17 @@
       ReorderSheetsAndAddToContext(context, rawDetails, sheetLoadInfos);
 
       progressDisplayer.DisplayTransientMessage(string.Empty);
-
-      var src = 0;
       foreach (IRawDetail detail in rawDetails.Where(o => o.IsIncluded))
       {
         AddToPolygons(context, src, detail, detail.Quantity, progressDisplayer, detail.IsIncluded, false, true, detail.StrictAngle);
         src++;
       }
+
+      return src;
     }
 
-    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false, bool isMultiplied = false,
-      AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
+    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false,
+      bool isMultiplied = false, AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
     {
       DetailLoadInfo item = new()
       {

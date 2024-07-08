@@ -18,22 +18,23 @@
 
     public override string ToJson()
     {
-      JsonSerializerOptions options = new JsonSerializerOptions();
+      JsonSerializerOptions options = new();
       options.Converters.Add(new NfpJsonConverter());
       options.WriteIndented = true;
       return JsonSerializer.Serialize(this, options);
     }
 
     public IMaterial Material { get; set; }
+    public string UniqueId { get; set; }
 
     /// <summary>
     ///   Creates a new <see cref="Sheet" /> from the json supplied.
     /// </summary>
     /// <param name="json">Serialised representation of the Sheet to create.</param>
     /// <returns>New <see cref="Sheet" />.</returns>
-    new public static Sheet FromJson(string json)
+    public new static Sheet FromJson(string json)
     {
-      JsonSerializerOptions options = new JsonSerializerOptions();
+      JsonSerializerOptions options = new();
       options.Converters.Add(new NfpJsonConverter());
       Sheet result = JsonSerializer.Deserialize<Sheet>(json, options);
       return result;
@@ -41,7 +42,7 @@
 
     public static Sheet NewSheet(int nameSuffix, int w = 3000, int h = 1500)
     {
-      RectangleSheet tt = new RectangleSheet();
+      RectangleSheet tt = new();
       tt.Name = "rectSheet" + nameSuffix;
       tt.Build(w, h);
       return tt;

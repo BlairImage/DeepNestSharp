@@ -12,7 +12,7 @@
   {
     private const int UiSurvivorsMin = 20;
     private static volatile object lockItemsObject = new object();
-    private readonly ITopNestResultsConfig config;
+    public readonly ITopNestResultsConfig Config;
 
     private readonly IDispatcherService dispatcherService;
 
@@ -22,7 +22,7 @@
 
     public TopNestResultsCollection(ITopNestResultsConfig config, IDispatcherService dispatcherService)
     {
-      this.config = config;
+      this.Config = config;
       this.dispatcherService = dispatcherService;
       this.items.CollectionChanged += this.Items_CollectionChanged;
     }
@@ -47,7 +47,7 @@
     {
       get
       {
-        return Math.Max(config.PopulationSize / 10, UiSurvivorsMin);
+        return Math.Max(Config.PopulationSize / 10, UiSurvivorsMin);
       }
     }
 
@@ -55,7 +55,7 @@
     {
       get
       {
-        var result = config.PopulationSize * 2 / 10;
+        var result = Config.PopulationSize * 2 / 10;
         if (result <= 0)
         {
           throw new InvalidOperationException("MaxCapacity is zero so no results will ever be captured. Fix the configuration (or feed in DefaultSvgNestConfig if it's a test).");
@@ -139,7 +139,7 @@
                 result = TryAddResult.Added;
               }
             }
-            else if (!IsANovelNest(payload.Fitness, items[i].Fitness, i, config.TopDiversity))
+            else if (!IsANovelNest(payload.Fitness, items[i].Fitness, i, Config.TopDiversity))
             {
               // Duplicate - respond true so the TryAdd consumer can report duplicate as
               // it won't find the result in the list
