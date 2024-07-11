@@ -26,28 +26,15 @@
       }
 
       // calc the total area of the sheets
-      double packingEfficiency;
       var totalArea = rawDetails.Sum(detail => detail.ToNfp().Area * detail.Quantity * SvgNest.Config.Multiplier);
-      if (rawDetails.All(detail => detail.IsRectangle()))
-      {
-        packingEfficiency = 0.9; // high efficiency for rectangles
-      }
-      else if (rawDetails.All(detail => detail.IsCircle()))
-      {
-        packingEfficiency = 0.8; // medium efficiency for circles
-      }
-      else
-      {
-        packingEfficiency = 0.8; // low efficiency for other shapes
-      }
 
       while (totalArea >= 0)
       {
-        ISheetLoadInfo bestFitSheet = m_materialCatalog.SelectBestFitSheet(totalArea, packingEfficiency, sheetLoadInfos.FirstOrDefault().Material.Name);
+        ISheetLoadInfo bestFitSheet = m_materialCatalog.SelectBestFitSheet(totalArea, sheetLoadInfos.FirstOrDefault().Material.Name);
 
         var src = context.GetNextSheetSource();
 
-        totalArea -= (bestFitSheet.Width - SvgNest.Config.SheetSpacing * 2) * (bestFitSheet.Height - SvgNest.Config.SheetSpacing * 2) * packingEfficiency;
+        totalArea -= (bestFitSheet.Width - SvgNest.Config.SheetSpacing * 2) * (bestFitSheet.Height - SvgNest.Config.SheetSpacing * 2) * SvgNest.Config.PackingEfficiency;
         Sheet ns = Sheet.NewSheet(context.Sheets.Count + 1, bestFitSheet.Width, bestFitSheet.Height);
         ns.Material = bestFitSheet.Material;
         ns.UniqueId = bestFitSheet.UniqueId;
@@ -61,12 +48,11 @@
 
     public int InitialiseNest<T>(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<T> rawDetails, IProgressDisplayer progressDisplayer, int src) where T : IRawDetail
     {
-      progressDisplayer.IsVisibleSecondaryProgressBar = false;
       context.Reset();
 
       ReorderSheetsAndAddToContext(context, rawDetails, sheetLoadInfos);
 
-      progressDisplayer.DisplayTransientMessage(string.Empty);
+      // progressDisplayer.DisplayTransientMessage(string.Empty);
       foreach (IRawDetail detail in rawDetails.Where(o => o.IsIncluded))
       {
         AddToPolygons(context, src, detail, detail.Quantity, progressDisplayer, detail.IsIncluded, false, true, detail.StrictAngle);

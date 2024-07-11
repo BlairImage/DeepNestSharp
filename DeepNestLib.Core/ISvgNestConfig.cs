@@ -79,6 +79,11 @@
     int ProcreationTimeout { get; set; }
 
     bool ShowPartPositions { get; set; }
+    
+    /// <summary>
+    ///  When selecting sheets, the packing efficiency to use.
+    /// </summary>
+    public double PackingEfficiency { get; set; }
 
     string ToJson();
   }

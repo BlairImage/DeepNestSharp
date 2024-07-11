@@ -5,6 +5,6 @@
 
   public interface IMaterialCatalog
   {
-    ISheetLoadInfo SelectBestFitSheet(double totalArea, double packingEfficiency, string materialType);
+    ISheetLoadInfo SelectBestFitSheet(double totalArea, string materialType);
   }
 }

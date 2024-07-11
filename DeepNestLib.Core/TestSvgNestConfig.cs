@@ -68,6 +68,7 @@
     public int ParallelNests { get; set; } = 10;
 
     public bool ShowPartPositions { get; set; } = false;
+    public double PackingEfficiency { get; set; }
 
     public string LastNestFilePath { get; set; }
 

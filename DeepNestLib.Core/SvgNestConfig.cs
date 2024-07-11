@@ -520,6 +520,8 @@ namespace DeepNestLib
       }
     }
 
+    public double PackingEfficiency { get; set; }
+
     /// <inheritdoc />
     public bool UseDllImport
     {
