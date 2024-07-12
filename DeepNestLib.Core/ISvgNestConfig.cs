@@ -85,6 +85,6 @@
     /// </summary>
     public double PackingEfficiency { get; set; }
 
-    string ToJson();
+    // string ToJson();
   }
 }

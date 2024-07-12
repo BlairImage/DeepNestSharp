@@ -17,7 +17,6 @@
     private readonly bool useParallel;
     private readonly IMinkowskiSumService minkoskiSumService;
     private readonly INestStateBackground state;
-    private bool showSecondaryProgress = false;
 
     public PmapWorker(IList<NfpPair> pairs, IProgressDisplayer progressDisplayer, bool useParallel, IMinkowskiSumService minkoskiSumService, INestStateBackground state)
     {
@@ -30,11 +29,6 @@
 
     public NfpPair[] PmapDeepNest()
     {
-      if (NfpPairCache.Count == 0)
-      {
-        progressDisplayer.InitialiseLoopProgress(ProgressBar.Secondary, "Pmap. . .", pairs.Count);
-        showSecondaryProgress = true;
-      }
       NfpPair[] ret = new NfpPair[pairs.Count];
       if (this.useParallel)
       {
@@ -58,11 +52,6 @@
         state.SetNfpPairCachePercentCached(NfpPairCache.PercentCached);
       }
 
-      if (showSecondaryProgress)
-      {
-        progressDisplayer.IsVisibleSecondaryProgressBar = false;
-      }
-
       return ret.ToArray();
     }
 
@@ -80,20 +69,12 @@
           {
             clipperNfp = minkoskiSumService.ClipperExecuteOuterNfp(pattern.Points, path.Points, MinkowskiSumPick.Largest);
             NfpPairCache.Add(pattern.Points, path.Points, pair.ARotation, pair.BRotation, pair.Asource, pair.Bsource, MinkowskiSumPick.Largest, clipperNfp);
-            if (showSecondaryProgress)
-            {
-              progressDisplayer.IncrementLoopProgress(ProgressBar.Secondary);
-            }
           }
         }
       }
       else
       {
         clipperNfp = minkoskiSumService.ClipperExecuteOuterNfp(pattern.Points, path.Points, MinkowskiSumPick.Largest);
-        if (showSecondaryProgress)
-        {
-          progressDisplayer.IncrementLoopProgress(ProgressBar.Secondary);
-        }
       }
 
       pair.A = null;

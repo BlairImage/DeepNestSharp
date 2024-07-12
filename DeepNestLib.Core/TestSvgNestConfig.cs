@@ -90,9 +90,9 @@
 
     public int MutationRateMax => 60;
 
-    public string ToJson()
-    {
-      return SvgNestConfigJsonConverter.ToJson(this);
-    }
+    // public string ToJson()
+    // {
+    //   return SvgNestConfigJsonConverter.ToJson(this);
+    // }
   }
 }

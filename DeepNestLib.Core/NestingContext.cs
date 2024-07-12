@@ -2,6 +2,7 @@
 {
   using System;
   using System.Collections.Generic;
+  using System.ComponentModel;
   using System.Diagnostics;
   using System.Linq;
   using System.Threading.Tasks;
@@ -9,7 +10,7 @@
   using IO;
   using Placement;
 
-  public class NestingContext : INestingContext
+  public partial class NestingContext : INestingContext, INotifyPropertyChanged
   {
     private readonly ISvgNestConfig config;
     private readonly IProgressDisplayer progressDisplayer;
@@ -30,7 +31,7 @@
       stateNestingContext = state;
       stateBackground = state;
     }
-    
+
     public IMessageService MessageService { get; }
     public IDispatcherService DispatcherService { get; }
 
@@ -54,13 +55,12 @@
     /// <returns>awaitable Task.</returns>
     public async Task StartNest()
     {
-      progressDisplayer.DisplayTransientMessage("Pre-processing. . .");
+      // progressDisplayer.DisplayTransientMessage("Pre-processing. . .");
       ReorderSheets();
       InternalReset();
       Current = null;
 
-      (NestItem<INfp>[] PartsLocal, List<NestItem<ISheet>> SheetsLocal) nestItems =
-        await Task.Run(() => { return SvgNestInitializer.BuildNestItems(config, Polygons, Sheets, progressDisplayer); }).ConfigureAwait(false);
+      (NestItem<INfp>[] PartsLocal, List<NestItem<ISheet>> SheetsLocal) nestItems = await Task.Run(() => { return SvgNestInitializer.BuildNestItems(config, Polygons, Sheets, progressDisplayer); }).ConfigureAwait(false);
 
       Nest = new SvgNest(MessageService, progressDisplayer, state, config, nestItems);
       isStopped = false;
@@ -97,7 +97,6 @@
           }
         }
 
-        progressDisplayer.InitialiseLoopProgress(ProgressBar.Secondary, config.PopulationSize);
         stateNestingContext.IncrementIterations();
       }
       catch (Exception ex)

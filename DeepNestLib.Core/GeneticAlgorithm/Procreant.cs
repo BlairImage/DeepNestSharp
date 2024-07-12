@@ -102,7 +102,7 @@
       var chromosome = $"{string.Join(",", citizen.Gene.Select(p => p.Part.Id))},{string.Join(",", citizen.Gene.Select(r => r.Rotation))}";
       if (ancestors.Add(chromosome))
       {
-        this.progressDisplayer.IncrementLoopProgress(ProgressBar.Primary);
+        // this.progressDisplayer.IncrementLoopProgress(ProgressBar.Primary);
         return true;
       }
       else
@@ -343,7 +343,7 @@
         }
         else
         {
-          this.progressDisplayer.DisplayTransientMessage($"Cumulative Terminations={terminations} ({chaperone.ElapsedMilliseconds / 1000:N0}s)");
+          // this.progressDisplayer.DisplayTransientMessage($"Cumulative Terminations={terminations} ({chaperone.ElapsedMilliseconds / 1000:N0}s)");
         }
       }
 

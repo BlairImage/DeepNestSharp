@@ -227,8 +227,6 @@
           {
             suffix = "Top";
           }
-
-          progressDisplayer.DisplayTransientMessage($"New top {State.TopNestResults.MaxCapacity} nest found: nesting time = {payload.PlacePartTime}ms");
         }
         else
         {
@@ -240,14 +238,11 @@
           {
             suffix = "Sub-optimal";
           }
-
-          progressDisplayer.DisplayTransientMessage($"Nesting time = {payload.PlacePartTime}ms ({suffix})");
         }
 
-        IncrementSecondaryProgressBar();
         if (State.TopNestResults.Top.TotalPlacedCount > 0)
         {
-          progressDisplayer.DisplayProgress(State.Population, State.TopNestResults.Top);
+          progressDisplayer.DisplayProgress(State, State.TopNestResults.Top);
         }
 
         Debug.Print($"Nest {payload.BackgroundTime}ms {suffix}");
@@ -298,7 +293,7 @@
             }
           }
 
-          progressDisplayer.DisplayTransientMessage("Executing Nest. . .");
+          // progressDisplayer.DisplayTransientMessage("Executing Nest. . .");
           if (config.UseParallel)
           {
             var end1 = procreant.Population.Length / 3;
@@ -339,10 +334,6 @@
         throw;
 #endif
       }
-      finally
-      {
-        progressDisplayer.IsVisibleSecondaryProgressBar = false;
-      }
     }
 
     // converts a polygon from normal double coordinates to integer coordinates used by clipper, as well as x/y -> X/Y
@@ -350,16 +341,6 @@
     {
       List<IntPoint> d = DeepNestClipper.ScaleUpPath(polygon.Points, Config.ClipperScale);
       return d;
-    }
-
-    private void IncrementSecondaryProgressBar()
-    {
-      if (!progressDisplayer.IsVisibleSecondaryProgressBar)
-      {
-        progressDisplayer.InitialiseLoopProgress(ProgressBar.Secondary, Config.PopulationSize);
-      }
-
-      progressDisplayer.IncrementLoopProgress(ProgressBar.Secondary);
     }
 
     private int ToTree(PolygonTreeItem[] list, int idstart = 0)

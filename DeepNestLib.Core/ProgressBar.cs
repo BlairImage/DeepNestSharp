@@ -1,8 +1,8 @@
 ﻿namespace DeepNestLib
 {
-  public enum ProgressBar
-  {
-    Primary,
-    Secondary,
-  }
+  // public enum ProgressBar
+  // {
+  //   Primary,
+  //   Secondary,
+  // }
 }

@@ -158,7 +158,7 @@
           this.InputPart = inputPart;
           this.logList.Clear();
           this.exportList.Clear();
-          this.PrepExport(inputPartIndex, "In.json", () => this.ToJson(true));
+          // this.PrepExport(inputPartIndex, "In.json", () => this.ToJson(true));
 
           var processedPart = new NoFitPolygon(inputPart, WithChildren.Included) as INfp;
           this.VerboseLog($"ProcessPart {inputPart.ToShortString()}.");
@@ -194,7 +194,7 @@
         this.VerboseLog($"{processedPart.ToShortString()} could be placed if sheet empty (but there's already {this.Placements.Count} placement[s] on the sheet - unconsidered).");
       }
 
-      this.PrepExport(inputPartIndex, "SheetNfpItems.scad", () => this.SheetNfp.Items.ToOpenScadPolygon());
+      // this.PrepExport(inputPartIndex, "SheetNfpItems.scad", () => this.SheetNfp.Items.ToOpenScadPolygon());
 
       if (this.SheetNfp.CanAcceptPart)
       {
@@ -210,7 +210,7 @@
         else
         {
           this.CombinedNfp = combinedNfp;
-          this.PrepExport(inputPartIndex, "combinedNfp.scad", () => combinedNfp.ToOpenScadPolygon());
+          // this.PrepExport(inputPartIndex, "combinedNfp.scad", () => combinedNfp.ToOpenScadPolygon());
         }
 
         if (this.EnableCaches)
@@ -227,7 +227,7 @@
 
         //Moved because I'm certain SheetNfp isn't accessed between where this was and here...
         var clipperSheetNfp = NfpHelper.InnerNfpToClipperCoordinates(this.SheetNfp.Items, this.Config.ClipperScale);
-        this.PrepExport(inputPartIndex, "clipperSheetNfp.scad", () => clipperSheetNfp.ToOpenScadPolygon());
+        // this.PrepExport(inputPartIndex, "clipperSheetNfp.scad", () => clipperSheetNfp.ToOpenScadPolygon());
 
         List<INfp> finalNfp;
         InnerFlowResult clipperForDifferenceResult = this.TryGetDifferenceWithSheetPolygon(this.Config.ClipperScale, this.CombinedNfp, processedPart, clipperSheetNfp, out finalNfp);
@@ -242,7 +242,7 @@
           return InnerFlowResult.Continue;
         }
 
-        this.PrepExport(inputPartIndex, "finalNfp.scad", () => finalNfp.ToOpenScadPolygon());
+        // this.PrepExport(inputPartIndex, "finalNfp.scad", () => finalNfp.ToOpenScadPolygon());
         PartPlacement position = GetBestPosition(
                                           processedPart,
                                           finalNfp,
@@ -324,7 +324,7 @@
       else
       {
         this.VerboseLog($"{processedPart.ToShortString()} could not be placed even when sheet empty (only do this for the first part on each sheet).");
-        this.PrepExport(inputPartIndex, $"Out-UnplaceableSheetNfp.dnsnfp", () => this.SheetNfp.ToJson());
+        // this.PrepExport(inputPartIndex, $"Out-UnplaceableSheetNfp.dnsnfp", () => this.SheetNfp.ToJson());
 
         return InnerFlowResult.Continue;
       }
@@ -506,7 +506,7 @@
     public string ToJson(bool writeIndented = false)
     {
       var options = new JsonSerializerOptions();
-      options.Converters.Add(new SvgNestConfigJsonConverter());
+      // options.Converters.Add(new SvgNestConfigJsonConverter());
       options.Converters.Add(new SheetJsonConverter());
       options.Converters.Add(new NfpJsonConverter());
       options.Converters.Add(new MinkowskiDictionaryJsonConverter());
@@ -523,8 +523,8 @@
       var result = this.placementWorker.AddPlacement(inputPart, this.Placements, processedPart, position, this.Config.PlacementType, this.Sheet, this.MergedLength);
       if (this.ExportExecutions)
       {
-        this.PrepExport(inputPartIndex, "Out.json", () => this.ToJson(true));
-        this.PrepExport(inputPartIndex, $"Out-Parts{result.PartPlacements.Count}.dnsp", () => result.ToJson(true));
+        // this.PrepExport(inputPartIndex, "Out.json", () => this.ToJson(true));
+        // this.PrepExport(inputPartIndex, $"Out-Parts{result.PartPlacements.Count}.dnsp", () => result.ToJson(true));
         if (this.SheetNfp == null)
         {
           this.PrepExport(inputPartIndex, $"Out-SheetNfpNone.dnsnfp", string.Empty);
@@ -573,20 +573,20 @@
     /// <summary>
     /// Call this overload to only evaluate the content if ExportExecutions set.
     /// </summary>
-    private void PrepExport(int inputPartIndex, string fileNameSuffix, Func<string> contentFunc)
-    {
-      try
-      {
-        if (this.ExportExecutions)
-        {
-          this.PrepExport(inputPartIndex, fileNameSuffix, contentFunc());
-        }
-      }
-      catch (Exception)
-      {
-        // NOP
-      }
-    }
+    // private void PrepExport(int inputPartIndex, string fileNameSuffix, Func<string> contentFunc)
+    // {
+    //   try
+    //   {
+    //     if (this.ExportExecutions)
+    //     {
+    //       this.PrepExport(inputPartIndex, fileNameSuffix, contentFunc());
+    //     }
+    //   }
+    //   catch (Exception)
+    //   {
+    //     // NOP
+    //   }
+    // }
 
     private void PersistExports()
     {
@@ -615,7 +615,7 @@
       options.Converters.Add(new ListJsonConverter<INfp>());
       options.Converters.Add(new IListInterfaceConverterFactory(typeof(NoFitPolygon)));
       options.Converters.Add(new WindowUnkJsonConverter());
-      options.Converters.Add(new SvgNestConfigJsonConverter());
+      // options.Converters.Add(new SvgNestConfigJsonConverter());
       options.Converters.Add(new SheetPlacementJsonConverter());
       options.Converters.Add(new SheetJsonConverter());
       options.Converters.Add(new NfpJsonConverter());

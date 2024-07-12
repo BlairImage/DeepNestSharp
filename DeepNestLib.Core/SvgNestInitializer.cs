@@ -73,13 +73,11 @@
     private static async Task ExecuteOffsetTreePhase(ISvgNestConfig config, IList<INfp> clonedPolygons, List<ISheet> clonedSheets, IProgressDisplayer progressDisplayer)
     {
       IGrouping<int, INfp>[] grps = clonedPolygons.GroupBy(z => z.Source).ToArray();
-      progressDisplayer.InitialiseLoopProgress(ProgressBar.Primary, "Pre-processing (Offset Tree Phase). . .", grps.Length);
       if (config.UseParallel)
       {
         Parallel.ForEach(grps, async item =>
         {
           OffsetTreeReplace(config, item);
-          await progressDisplayer.IncrementLoopProgress(ProgressBar.Primary).ConfigureAwait(false);
         });
       }
       else
@@ -88,8 +86,6 @@
         foreach (IGrouping<int, INfp> item in grps)
         {
           OffsetTreeReplace(config, item);
-          await progressDisplayer.IncrementLoopProgress(ProgressBar.Primary).ConfigureAwait(false);
-          progressDisplayer.DisplayTransientMessage($"Pre-processing (Offset Tree Phase-{idx}). . .");
           idx++;
         }
       }

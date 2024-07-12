@@ -155,13 +155,6 @@
 
     private void ThenDeepNest(NfpPair[] nfpPairs, DeepNestGene gene, ISheet[] sheets, ISvgNestConfig config, int index, Stopwatch backgroundStopwatch)
     {
-      bool hideSecondaryProgress = false;
-      if (state.NestCount == 0 || state.AverageNestTime > 2000)
-      {
-        hideSecondaryProgress = true;
-        progressDisplayer.InitialiseLoopProgress(ProgressBar.Secondary, "Placement. . .", nfpPairs.Length);
-      }
-
       if (config.UseParallel)
       {
         Parallel.For(0, nfpPairs.Count(), (i) =>
@@ -180,10 +173,6 @@
       // console.timeEnd('Total');
       // console.log('before sync');
       this.SyncPlaceParts(gene, sheets, config, index, backgroundStopwatch);
-      if (hideSecondaryProgress)
-      {
-        progressDisplayer.IsVisibleSecondaryProgressBar = false;
-      }
     }
   }
 }

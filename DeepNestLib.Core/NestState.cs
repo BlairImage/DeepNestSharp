@@ -1,44 +1,62 @@
 ﻿namespace DeepNestLib
 {
   using System;
+  using System.Collections.Specialized;
   using System.ComponentModel;
   using System.Linq;
+  using System.Threading;
 #if NCRUNCH
   using System.Diagnostics;
 #endif
-  using System.Threading;
 
-  public class NestState : INestState, INestStateBackground, INestStateSvgNest, INestStateMinkowski, INestStateNestingContext, INotifyPropertyChanged
+  public class NestState : INestStateBackground, INestStateSvgNest, INestStateMinkowski, INestStateNestingContext, INotifyPropertyChanged
   {
     private int clipperCallCounter;
     private int dllCallCounter;
     private int generations;
     private int iterations;
+    private long lastNestTime;
+    private long lastPlacementTime;
+    private int nestCount;
     private int population;
     private int rejected;
     private int threads;
-    private int nestCount;
     private long totalNestTime;
-    private long lastPlacementTime;
-    private double nfpPairCachePercentCached;
-    private long lastNestTime;
     private long totalPlacementTime;
 
     public NestState(ITopNestResultsConfig config, IDispatcherService dispatcherService)
     {
-      this.TopNestResults = new TopNestResultsCollection(config, dispatcherService);
-      this.TopNestResults.CollectionChanged += this.TopNestResults_CollectionChanged;
+      TopNestResults = new TopNestResultsCollection(config, dispatcherService);
+      TopNestResults.CollectionChanged += TopNestResults_CollectionChanged;
     }
 
-    private void TopNestResults_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    [Category("Minkowski")]
+    [DisplayName("Clipper Call Counter")]
+    public int ClipperCallCounter => clipperCallCounter;
+
+    [Description("Last Nest Time (milliseconds). The total time for the nest including Pmap, DeepNest and Placement.")]
+    [Category("Performance")]
+    [DisplayName("Last Nest Time")]
+    public long LastNestTime => lastNestTime;
+
+    [Description("Time last top placement found.")]
+    [Category("Performance")]
+    [DisplayName("Last Top Found")]
+    public DateTime? LastTopFoundTimestamp
     {
-      if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+      get
       {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LastTopFoundTimestamp)));
+        if (TopNestResults.Count == 0)
+        {
+          return null;
+        }
+        return TopNestResults.Max(o => o.CreatedAt);
       }
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
+    [Description("Number of rejected Nests.")]
+    [Category("Performance")]
+    public int Rejected => rejected;
 
     [Description("Average time per Nest Result since start of the run.")]
     [Category("Performance")]
@@ -50,19 +68,12 @@
     [DisplayName("Average Placement Time")]
     public long AveragePlacementTime => nestCount == 0 ? 0 : totalPlacementTime / nestCount;
 
-    [Description("The number of times the external C++ Minkowski library has been called. " +
-      "This should stabilise at the number of distinct parts in the nest times the number " +
-      "of rotations. If it keeps growing then the caching mechanism may not be working as " +
-      "intended; possibly due to complexity of the parts, possibly due to overflow " +
-      "failures in the Minkoski Sum. That said if your parts have holes then the calls to" +
-      "hole NfpSums aren't cached?")]
+    [Description("The number of times the external C++ Minkowski library has been called. " + "This should stabilise at the number of distinct parts in the nest times the number " +
+                 "of rotations. If it keeps growing then the caching mechanism may not be working as " + "intended; possibly due to complexity of the parts, possibly due to overflow " +
+                 "failures in the Minkoski Sum. That said if your parts have holes then the calls to" + "hole NfpSums aren't cached?")]
     [Category("Minkowski")]
     [DisplayName("Dll Call Counter")]
     public int DllCallCounter => dllCallCounter;
-
-    [Category("Minkowski")]
-    [DisplayName("Clipper Call Counter")]
-    public int ClipperCallCounter => clipperCallCounter;
 
     [Description("The number of generations processed.")]
     [Category("Genetic Algorithm")]
@@ -74,33 +85,10 @@
     [Category("Progress")]
     public int Iterations => iterations;
 
-    [Description("Last Nest Time (milliseconds). The total time for the nest including Pmap, DeepNest and Placement.")]
-    [Category("Performance")]
-    [DisplayName("Last Nest Time")]
-    public long LastNestTime => lastNestTime;
-
     [Description("Last Placement Time (milliseconds).")]
     [Category("Performance")]
     [DisplayName("Last Placement Time")]
     public long LastPlacementTime => lastPlacementTime;
-
-    [Description("Time last top placement found.")]
-    [Category("Performance")]
-    [DisplayName("Last Top Found")]
-    public DateTime? LastTopFoundTimestamp
-    {
-      get
-      {
-        if (this.TopNestResults.Count == 0)
-        {
-          return null;
-        }
-        else
-        {
-          return this.TopNestResults.Max(o => o.CreatedAt);
-        }
-      }
-    }
 
     [Category("Progress")]
     [DisplayName("Nest Count")]
@@ -108,16 +96,12 @@
 
     [Category("Performance")]
     [DisplayName("NfpPair % Cached")]
-    public double NfpPairCachePercentCached => nfpPairCachePercentCached;
+    public double NfpPairCachePercentCached { get; private set; }
 
     /// <inheritdoc />
     [Description("Population of the current generation.")]
     [Category("Genetic Algorithm")]
     public int Population => population;
-
-    [Description("Number of rejected Nests.")]
-    [Category("Performance")]
-    public int Rejected => rejected;
 
     [Description("Number of active Nest threads.")]
     [Category("Performance")]
@@ -126,7 +110,28 @@
     [Browsable(false)]
     public TopNestResultsCollection TopNestResults { get; }
 
-    public static NestState CreateInstance(ISvgNestConfig config, IDispatcherService dispatcherService) => new NestState(config, dispatcherService);
+    public void SetIsErrored()
+    {
+      IsErrored = true;
+    }
+
+    public void SetNfpPairCachePercentCached(double percentCached)
+    {
+      NfpPairCachePercentCached = percentCached;
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NfpPairCachePercentCached)));
+    }
+
+    void INestStateMinkowski.IncrementDllCallCounter()
+    {
+      Interlocked.Increment(ref dllCallCounter);
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DllCallCounter)));
+    }
+
+    void INestStateMinkowski.IncrementClipperCallCounter()
+    {
+      Interlocked.Increment(ref clipperCallCounter);
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ClipperCallCounter)));
+    }
 
     void INestStateNestingContext.Reset()
     {
@@ -140,9 +145,9 @@
       Interlocked.Exchange(ref iterations, 0);
       Interlocked.Exchange(ref dllCallCounter, 0);
       Interlocked.Exchange(ref clipperCallCounter, 0);
-      this.IsErrored = false;
+      IsErrored = false;
       TopNestResults.Clear();
-      this.SetNfpPairCachePercentCached(0);
+      SetNfpPairCachePercentCached(0);
 
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LastTopFoundTimestamp)));
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Population)));
@@ -157,6 +162,12 @@
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DllCallCounter)));
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ClipperCallCounter)));
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TopNestResults)));
+    }
+
+    void INestStateNestingContext.IncrementIterations()
+    {
+      Interlocked.Increment(ref iterations);
+      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Iterations)));
     }
 
     void INestStateSvgNest.IncrementPopulation()
@@ -219,39 +230,25 @@
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Threads)));
     }
 
-    void INestStateNestingContext.IncrementIterations()
-    {
-      Interlocked.Increment(ref iterations);
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Iterations)));
-    }
-
-    void INestStateMinkowski.IncrementDllCallCounter()
-    {
-      Interlocked.Increment(ref dllCallCounter);
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DllCallCounter)));
-    }
-
-    void INestStateMinkowski.IncrementClipperCallCounter()
-    {
-      Interlocked.Increment(ref clipperCallCounter);
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ClipperCallCounter)));
-    }
-
     public void IncrementRejected()
     {
       Interlocked.Increment(ref rejected);
       PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Rejected)));
     }
 
-    public void SetIsErrored()
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    private void TopNestResults_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
-      this.IsErrored = true;
+      if (e.Action == NotifyCollectionChangedAction.Add)
+      {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LastTopFoundTimestamp)));
+      }
     }
 
-    public void SetNfpPairCachePercentCached(double percentCached)
+    public static NestState CreateInstance(ISvgNestConfig config, IDispatcherService dispatcherService)
     {
-      nfpPairCachePercentCached = percentCached;
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NfpPairCachePercentCached)));
+      return new NestState(config, dispatcherService);
     }
   }
 }
