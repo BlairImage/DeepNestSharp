@@ -20,14 +20,14 @@
       0,
     };
 
-    private readonly double[] strictVerticalAngles = new double[]
+    private readonly double[] strictHorizontalAngles = new double[]
     {
       0,
       180,
     };
 
     // this one prob wont be used too much
-    private readonly double[] strictHorizontalAngles = new double[]
+    private readonly double[] strictVerticalAngles = new double[]
     {
       90,
       270,
@@ -233,7 +233,7 @@
 
     private bool IsPartRotationRestricted(INfp part, AnglesEnum restriction)
     {
-      return part.StrictAngle == restriction;
+      return part.StrictAngle == restriction || (part.StrictAngle == AnglesEnum.None);
     }
 
     // returns a random individual from the population, weighted to the front of the list (lower fitness value is more likely to be selected)

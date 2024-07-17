@@ -289,22 +289,23 @@
 #if NCRUNCH
       this.Config.Rotations.MustBeGreaterThan(0, "Config.Rotations", "is this a test and you've passed in a Fake<Config>?");
 #endif
-      for (int j = 0; j < this.Config.Rotations; j++)
-      {
-        this.VerboseLog("Calculate first on SheetNfp");
-        if (this.WouldFitOnRectangularSheet(processedPart))
-        {
-          this.SheetNfp = this.InitialiseSheetNfp(processedPart);
-          if (this.SheetNfp.CanAcceptPart)
-          {
-            this.VerboseLog($"{processedPart.ToShortString()} could be placed if sheet empty (only do this for the first part on each sheet).");
-            break;
-          }
-        }
+      // for (int j = 0; j < this.Config.Rotations; j++)
+      // {
+      //   this.VerboseLog("Calculate first on SheetNfp");
+      //   if (this.WouldFitOnRectangularSheet(processedPart))
+      //   {
+      //     this.SheetNfp = this.InitialiseSheetNfp(processedPart);
+      //     if (this.SheetNfp.CanAcceptPart)
+      //     {
+      //       this.VerboseLog($"{processedPart.ToShortString()} could be placed if sheet empty (only do this for the first part on each sheet).");
+      //       break;
+      //     }
+      //   }
+      //
+      //   processedPart = processedPart.Rotate(360D / this.Config.Rotations);
+      // }
 
-        processedPart = processedPart.Rotate(360D / this.Config.Rotations);
-      }
-
+      this.SheetNfp = this.InitialiseSheetNfp(processedPart);
       if (this.SheetNfp != null && SheetNfp.CanAcceptPart)
       {
         this.VerboseLog("First placement, put it on the bottom left corner. . .");
@@ -492,7 +493,7 @@
     /// <returns>.t if it would (so go ahead with expensive Clipper fitment.</returns>
     private bool WouldFitOnRectangularSheet(INfp processedPart)
     {
-      return processedPart.WidthCalculated <= this.Sheet.WidthCalculated &&
+      return processedPart.WidthCalculated <= this.Sheet.WidthCalculated ||
                         processedPart.HeightCalculated <= this.Sheet.HeightCalculated;
     }
 

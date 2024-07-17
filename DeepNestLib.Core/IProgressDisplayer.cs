@@ -10,7 +10,7 @@
     int Population { get; set; }
     int PlacedParts { get; set; }
     int TotalPartsToPlace { get; set; }
-    double Fitness { get; set; }
+    double BestFitness { get; set; }
     bool AllPartsPlaced { get; set; }
     string MaterialName { get; set; }
 

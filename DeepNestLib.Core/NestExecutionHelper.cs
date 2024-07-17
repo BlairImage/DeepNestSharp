@@ -62,8 +62,8 @@
       return src;
     }
 
-    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false,
-      bool isMultiplied = false, AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
+    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false, bool isMultiplied = false,
+      AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
     {
       DetailLoadInfo item = new()
       {

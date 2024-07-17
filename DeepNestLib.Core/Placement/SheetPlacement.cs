@@ -21,12 +21,6 @@
     private NoFitPolygon hull;
     private double clipperScale;
 
-    [JsonConstructor]
-    public SheetPlacement(PlacementTypeEnum placementType, ISheet sheet, IReadOnlyList<IPartPlacement> partPlacements, double mergedLength)
-      : this(placementType, sheet, partPlacements, mergedLength, new TestSvgNestConfig().ClipperScale)
-    {
-    }
-
     public SheetPlacement(PlacementTypeEnum placementType, ISheet sheet, IReadOnlyList<IPartPlacement> partPlacements, double mergedLength, double clipperScale)
     {
       this.PlacementType = placementType;
