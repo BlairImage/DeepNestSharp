@@ -111,7 +111,8 @@
         {
           Id = item.Id,
           UniqueId = item.UniqueId,
-          Source = item.Source
+          Source = item.Source,
+          Material = item.Material
         };
         clone.ReplacePoints(item.Points.Select(z => new SvgPoint(z.X, z.Y)
         {

@@ -233,7 +233,7 @@
 
     private bool IsPartRotationRestricted(INfp part, AnglesEnum restriction)
     {
-      return part.StrictAngle == restriction || (part.StrictAngle == AnglesEnum.None);
+      return part.StrictAngle == restriction;
     }
 
     // returns a random individual from the population, weighted to the front of the list (lower fitness value is more likely to be selected)

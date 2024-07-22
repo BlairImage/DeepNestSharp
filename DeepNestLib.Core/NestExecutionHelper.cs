@@ -46,13 +46,14 @@
       }
     }
 
-    public int InitialiseNest<T>(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<T> rawDetails, IProgressDisplayer progressDisplayer, int src) where T : IRawDetail
+    public int InitialiseNest<T>(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<T> rawDetails, IProgressDisplayer progressDisplayer) where T : IRawDetail
     {
       context.Reset();
 
       ReorderSheetsAndAddToContext(context, rawDetails, sheetLoadInfos);
 
       // progressDisplayer.DisplayTransientMessage(string.Empty);
+      var src = 0;
       foreach (IRawDetail detail in rawDetails.Where(o => o.IsIncluded))
       {
         AddToPolygons(context, src, detail, detail.Quantity, progressDisplayer, detail.IsIncluded, false, true, detail.StrictAngle);

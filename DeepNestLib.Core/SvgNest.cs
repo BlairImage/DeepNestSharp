@@ -287,6 +287,7 @@
               clone.Id = sid; // id is the unique id of all parts that will be nested, including cloned duplicates
               clone.Source = poly.Source; // source is the id of each unique part from the main part list
               clone.Children = poly.Children.ToList();
+              clone.Material = poly.Material;
 
               sheets.Add(new Sheet(clone, WithChildren.Included));
               sid++;

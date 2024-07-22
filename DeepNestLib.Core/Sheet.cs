@@ -10,6 +10,7 @@
 
     public Sheet(ISheet sheet, WithChildren withChildren) : base(sheet, withChildren)
     {
+      this.Material = sheet.Material;
     }
 
     public Sheet(INfp nfp, WithChildren withChildren) : base(nfp, withChildren)
