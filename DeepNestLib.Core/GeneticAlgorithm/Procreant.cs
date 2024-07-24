@@ -19,6 +19,21 @@
     {
       0,
     };
+    
+    private readonly double[] strictRotate90 = new double[]
+    {
+      90
+    };
+    
+    private readonly double[] strictRotate180 = new double[]
+    {
+      180
+    };
+    
+    private readonly double[] strictRotate270 = new double[]
+    {
+      270
+    };
 
     private readonly double[] strictHorizontalAngles = new double[]
     {
@@ -216,7 +231,7 @@
       {
         return strictAsPreviewedAngles[random.Next() % strictAsPreviewedAngles.Length];
       }
-      if (IsPartRotationRestricted(part, AnglesEnum.Rotate90))
+      if (IsPartRotationRestricted(part, AnglesEnum.RotateAround90))
       {
         return strictRotate90Angles[random.Next() % strictRotate90Angles.Length];
       }
@@ -227,6 +242,18 @@
       if (IsPartRotationRestricted(part, AnglesEnum.Horizontal))
       {
         return strictHorizontalAngles[random.Next() % strictHorizontalAngles.Length];
+      }
+      if (IsPartRotationRestricted(part, AnglesEnum.Rotate90Degrees))
+      {
+        return strictRotate270[random.Next() % strictRotate90.Length];
+      }
+      if (IsPartRotationRestricted(part, AnglesEnum.Rotate180Degrees))
+      {
+        return strictRotate180[random.Next() % strictRotate180.Length];
+      }
+      if (IsPartRotationRestricted(part, AnglesEnum.Rotate270Degrees))
+      {
+        return strictRotate90[random.Next() % strictRotate270.Length];
       }
       return Math.Floor(r.NextDouble() * config.Rotations) * (360f / config.Rotations);
     }
