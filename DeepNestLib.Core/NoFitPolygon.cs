@@ -115,8 +115,8 @@
           return 0;
         }
 
-        var maxx = Math.Abs(MaxX);
-        var minx = Math.Abs(MinX);
+        var maxx = MaxX;
+        var minx = MinX;
 
         return maxx - minx;
       }
@@ -133,8 +133,8 @@
           return 0;
         }
 
-        var maxy = Math.Abs(MaxY);
-        var miny = Math.Abs(MinY);
+        var maxy = MaxY;
+        var miny = MinY;
         return maxy - miny;
       }
     }
