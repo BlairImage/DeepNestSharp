@@ -30,14 +30,14 @@
 
       while (totalArea >= 0)
       {
-        ISheetLoadInfo bestFitSheet = m_materialCatalog.SelectBestFitSheet(totalArea, sheetLoadInfos.FirstOrDefault().Material.Name);
+        ISheetLoadInfo bestFitSheet = m_materialCatalog.SelectBestFitSheet(totalArea, sheetLoadInfos.FirstOrDefault()?.Material);
 
         var src = context.GetNextSheetSource();
 
         totalArea -= (bestFitSheet.Width - SvgNest.Config.SheetSpacing * 2) * (bestFitSheet.Height - SvgNest.Config.SheetSpacing * 2) * SvgNest.Config.PackingEfficiency;
         Sheet ns = Sheet.NewSheet(context.Sheets.Count + 1, bestFitSheet.Width, bestFitSheet.Height);
         ns.Material = bestFitSheet.Material;
-        ns.UniqueId = bestFitSheet.UniqueId;
+        ns.UniqueId = bestFitSheet.UniqueSheetId;
         context.Sheets.Add(ns);
         ns.Source = src;
         bestFitSheet.Quantity++;
@@ -63,8 +63,8 @@
       return src;
     }
 
-    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false, bool isMultiplied = false,
-      AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
+    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false,
+      bool isMultiplied = false, AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
     {
       DetailLoadInfo item = new()
       {
