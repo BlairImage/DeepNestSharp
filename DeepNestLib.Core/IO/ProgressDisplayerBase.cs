@@ -1,7 +1,6 @@
 ﻿namespace DeepNestLib.IO
 {
   using System;
-  using System.Threading.Tasks;
   using Placement;
 
   public abstract class ProgressDisplayerBase
@@ -19,14 +18,11 @@
 
     protected INestState State => state ?? (state = stateFactory());
 
-    protected internal static double CalculatePercentageComplete(int placedParts, int currentPopulation, int populationSize, int totalPartsToPlace)
-    {
-      var progressPopulation = 0.66f * ((double)currentPopulation / populationSize);
-      var progressPlacements = 0.34f * ((double)placedParts / totalPartsToPlace);
-      var percentageComplete = progressPopulation + progressPlacements;
-      return percentageComplete;
-    }
-
+    /// <summary>
+    ///   Calculates the percentage complete based on the given nest result.
+    /// </summary>
+    /// <param name="topNest">The nest result to calculate the percentage complete for.</param>
+    /// <returns>The percentage complete.</returns>
     protected internal static double CalculatePercentageComplete(INestResult topNest)
     {
       var progressPopulation = 0.66f * topNest.MaterialUtilization;

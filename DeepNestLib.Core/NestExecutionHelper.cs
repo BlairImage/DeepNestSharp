@@ -1,6 +1,7 @@
 ﻿namespace DeepNestLib
 {
   using System.Collections.Generic;
+  using System.Diagnostics;
   using System.Linq;
   using IO;
   using NestProject;
@@ -27,6 +28,7 @@
 
       // calc the total area of the sheets
       var totalArea = rawDetails.Sum(detail => detail.ToNfp().Area * detail.Quantity * SvgNest.Config.Multiplier);
+      Debug.Print($"Total area of parts: {totalArea}");
 
       while (totalArea >= 0)
       {
@@ -34,7 +36,9 @@
 
         var src = context.GetNextSheetSource();
 
-        totalArea -= (bestFitSheet.Width - SvgNest.Config.SheetSpacing * 2) * (bestFitSheet.Height - SvgNest.Config.SheetSpacing * 2) * SvgNest.Config.PackingEfficiency;
+        var sheetArea = (bestFitSheet.Width - SvgNest.Config.SheetSpacing * 2) * (bestFitSheet.Height - SvgNest.Config.SheetSpacing * 2) * SvgNest.Config.PackingEfficiency;
+        Debug.Print($"Sheet area: {sheetArea}");
+        totalArea -= sheetArea;
         Sheet ns = Sheet.NewSheet(context.Sheets.Count + 1, bestFitSheet.Width, bestFitSheet.Height);
         ns.Material = bestFitSheet.Material;
         ns.UniqueId = bestFitSheet.UniqueSheetId;
@@ -43,6 +47,7 @@
         bestFitSheet.Quantity++;
 
         context.ReorderSheets();
+        Debug.Print($"Total area left: {totalArea}");
       }
     }
 
@@ -63,8 +68,8 @@
       return src;
     }
 
-    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false,
-      bool isMultiplied = false, AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
+    public void AddToPolygons(NestingContext context, int src, IRawDetail det, int quantity, IProgressDisplayer progressDisplayer, bool isIncluded = true, bool isPriority = false, bool isMultiplied = false,
+      AnglesEnum strictAngles = AnglesEnum.AsPreviewed)
     {
       DetailLoadInfo item = new()
       {
