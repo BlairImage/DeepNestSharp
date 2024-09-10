@@ -52,6 +52,16 @@
     public string DisplayName => $"{Name}: ${Cost}";
 
     /// <summary>
+    ///   Gets or sets the user who created the material.
+    /// </summary>
+    public string CreatedBy { get; set; }
+
+    /// <summary>
+    ///   Gets or sets the user who last edited the material.
+    /// </summary>
+    public string LastEditedBy { get; set; }
+
+    /// <summary>
     ///   Adds a stock size with the specified width, height, and quantity.
     /// </summary>
     /// <param name="width">The width of the stock size.</param>
