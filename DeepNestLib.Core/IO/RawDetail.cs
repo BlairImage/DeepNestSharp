@@ -1,12 +1,12 @@
 ﻿namespace DeepNestLib.IO
 {
+  using GeneticAlgorithm;
+  using NestProject;
   using System;
   using System.Collections.Generic;
   using System.Drawing;
   using System.Drawing.Drawing2D;
   using System.Linq;
-  using GeneticAlgorithm;
-  using NestProject;
 
   public class RawDetail<TSourceEntity> : IRawDetail
   {
