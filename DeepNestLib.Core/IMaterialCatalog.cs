@@ -57,25 +57,22 @@
     /// <summary>
     ///   Asynchronously adds a sheet load information to a material in the catalog.
     /// </summary>
-    /// <param name="material">The material to add the sheet load information to.</param>
     /// <param name="sheetLoadInfo">The sheet load information to add.</param>
     /// <returns>A task representing the asynchronous operation. The task result is the Id of the added sheet load information.</returns>
-    Task<int> AddSheetToMaterialAsync(IMaterial material, ISheetLoadInfo sheetLoadInfo);
+    Task<int> AddSheetAsync(ISheetLoadInfo sheetLoadInfo);
 
     /// <summary>
     ///   Asynchronously deletes a sheet load information from a material in the catalog.
     /// </summary>
-    /// <param name="material">The material to delete the sheet load information from.</param>
     /// <param name="sheetLoadInfo">The sheet load information to delete.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task DeleteSheetToMaterialAsync(IMaterial material, ISheetLoadInfo sheetLoadInfo);
+    Task DeleteSheetAsync(ISheetLoadInfo sheetLoadInfo);
 
     /// <summary>
     ///   Asynchronously updates a sheet load information in a material in the catalog.
     /// </summary>
-    /// <param name="material">The material to update the sheet load information in.</param>
     /// <param name="sheetLoadInfo">The updated sheet load information.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task UpdateSheetInMaterialAsync(IMaterial material, ISheetLoadInfo sheetLoadInfo);
+    Task UpdateSheetAsync(ISheetLoadInfo sheetLoadInfo);
   }
 }

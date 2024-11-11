@@ -43,25 +43,22 @@
     /// <summary>
     ///   Adds a sheet to a material asynchronously.
     /// </summary>
-    /// <param name="material">The material to add the sheet to.</param>
     /// <param name="sheetLoadInfo">The sheet load information.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the ID of the added sheet.</returns>
-    Task<int> AddSheetToMaterialAsync(IMaterial material, ISheetLoadInfo sheetLoadInfo);
+    Task<int> AddSheetAsync(ISheetLoadInfo sheetLoadInfo);
 
     /// <summary>
     ///   Deletes a sheet from a material asynchronously.
     /// </summary>
-    /// <param name="material">The material to delete the sheet from.</param>
     /// <param name="sheetLoadInfo">The sheet load information.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task DeleteSheetFromMaterialAsync(IMaterial material, ISheetLoadInfo sheetLoadInfo);
+    Task DeleteSheetAsync(ISheetLoadInfo sheetLoadInfo);
 
     /// <summary>
     ///   Updates a sheet in a material asynchronously.
     /// </summary>
-    /// <param name="material">The material to update the sheet in.</param>
     /// <param name="sheetLoadInfo">The sheet load information.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    Task UpdateSheetInMaterialAsync(IMaterial material, ISheetLoadInfo sheetLoadInfo);
+    Task UpdateSheetAsync(ISheetLoadInfo sheetLoadInfo);
   }
 }
