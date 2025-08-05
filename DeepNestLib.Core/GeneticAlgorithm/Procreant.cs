@@ -1,11 +1,11 @@
 ﻿namespace DeepNestLib.GeneticAlgorithm
 {
+  using DeepNestLib.Geometry;
+  using DeepNestLib.NestProject;
   using System;
   using System.Collections.Generic;
   using System.Diagnostics;
   using System.Linq;
-  using DeepNestLib.Geometry;
-  using DeepNestLib.NestProject;
 
   public class Procreant
   {
@@ -19,17 +19,17 @@
     {
       0,
     };
-    
+
     private readonly double[] strictRotate90 = new double[]
     {
       90
     };
-    
+
     private readonly double[] strictRotate180 = new double[]
     {
       180
     };
-    
+
     private readonly double[] strictRotate270 = new double[]
     {
       270
@@ -242,18 +242,6 @@
       if (IsPartRotationRestricted(part, AnglesEnum.Horizontal))
       {
         return strictHorizontalAngles[random.Next() % strictHorizontalAngles.Length];
-      }
-      if (IsPartRotationRestricted(part, AnglesEnum.Rotate90Degrees))
-      {
-        return strictRotate270[random.Next() % strictRotate90.Length];
-      }
-      if (IsPartRotationRestricted(part, AnglesEnum.Rotate180Degrees))
-      {
-        return strictRotate180[random.Next() % strictRotate180.Length];
-      }
-      if (IsPartRotationRestricted(part, AnglesEnum.Rotate270Degrees))
-      {
-        return strictRotate90[random.Next() % strictRotate270.Length];
       }
       return Math.Floor(r.NextDouble() * config.Rotations) * (360f / config.Rotations);
     }
