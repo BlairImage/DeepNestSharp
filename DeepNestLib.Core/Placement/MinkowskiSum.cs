@@ -1,19 +1,21 @@
 ﻿namespace DeepNestLib.Placement
 {
+  using ClipperLib;
+  using DeepNestLib;
+  using DeepNestLib.Geometry;
+  using Minkowski;
   using System;
   using System.Collections.Generic;
   using System.Drawing;
   using System.IO;
   using System.Linq;
   using System.Text.Json.Serialization;
-  using ClipperLib;
-  using DeepNestLib;
-  using DeepNestLib.Geometry;
-  using Minkowski;
 
   public class MinkowskiSum : IMinkowskiSumService
   {
     private static volatile object minkowskiSyncLock = new object();
+
+    private readonly ISvgNestConfig nestingConfig;
 
     [JsonConstructor]
     public MinkowskiSum()
@@ -25,10 +27,11 @@
     /// Private because sharing/reusing the cache is dangerous.
     /// Replacing static global dependencies with factories to facilitate Unit Tests.
     /// </summary>
-    private MinkowskiSum(bool useMinkowskiCache, INestStateMinkowski state)
+    private MinkowskiSum(bool useMinkowskiCache, INestStateMinkowski state, ISvgNestConfig nestingConfig)
     {
       UseMinkowskiCache = useMinkowskiCache;
       State = state;
+      this.nestingConfig = nestingConfig;
     }
 
     [JsonInclude]
@@ -47,7 +50,7 @@
     /// <param name="config">Singleton config for the nest.</param>
     /// <param name="nestState">Shared NestState (instead of NestState.Default).</param>
     /// <returns><see cref="IMinkowskiSumService"/>.</returns>
-    public static IMinkowskiSumService CreateInstance(ISvgNestConfig config, INestStateMinkowski nestState) => new MinkowskiSum(config.UseMinkowskiCache, nestState);
+    public static IMinkowskiSumService CreateInstance(ISvgNestConfig config, INestStateMinkowski nestState, ISvgNestConfig nestingConfig) => new MinkowskiSum(config.UseMinkowskiCache, nestState, nestingConfig);
 
     /// <summary>
     /// Create a new instance with a self contained cache.
@@ -55,7 +58,7 @@
     /// <param name="useMinkowskiCache">A value indicating whether to cache the results.</param>
     /// <param name="nestState">Shared NestState (instead of NestState.Default).</param>
     /// <returns><see cref="IMinkowskiSumService"/>.</returns>
-    public static IMinkowskiSumService CreateInstance(bool useMinkowskiCache, INestStateMinkowski nestState) => new MinkowskiSum(useMinkowskiCache, nestState);
+    public static IMinkowskiSumService CreateInstance(bool useMinkowskiCache, INestStateMinkowski nestState, ISvgNestConfig nestingConfig) => new MinkowskiSum(useMinkowskiCache, nestState, nestingConfig);
 
     INfp[] IMinkowskiSumService.DllImportExecute(INfp path, INfp pattern, MinkowskiSumCleaning minkowskiSumCleaning)
     {
@@ -191,7 +194,7 @@
             {
               if (ret.Points.Length == 0)
               {
-                if (SvgNest.Config.ExportExecutions)
+                if (nestingConfig.ExportExecutions)
                 {
                   var matchKvp = MinkowskiCache.ToList().First(o => o.Value.Equals(ret));
                   File.WriteAllText(@"C:\Temp\MinkowskiSum\MatchKey.json", matchKvp.Key.ToJson());
@@ -226,7 +229,7 @@
       if (minkowskiSumCleaning == MinkowskiSumCleaning.Cleaned)
       {
         VerboseLogAction?.Invoke("Clean MinkowskiSum. . .");
-        ret.Clean();
+        ret.Clean(nestingConfig);
       }
 
       return new INfp[] { ret };

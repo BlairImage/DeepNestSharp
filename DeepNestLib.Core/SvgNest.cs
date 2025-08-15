@@ -1,14 +1,17 @@
 ﻿namespace DeepNestLib
 {
-  using System;
-  using System.Collections.Generic;
-  using System.Diagnostics;
-  using System.Linq;
-  using System.Threading.Tasks;
   using ClipperLib;
   using GeneticAlgorithm;
   using Geometry;
   using Placement;
+  using System;
+  using System.Collections.Concurrent;
+  using System.Collections.Generic;
+  using System.Diagnostics;
+  using System.Linq;
+  using System.Security.Cryptography;
+  using System.Threading;
+  using System.Threading.Tasks;
 #if NCRUNCH
   using System.Diagnostics;
 #endif
@@ -29,12 +32,13 @@
       State = nestState;
       this.messageService = messageService;
       this.progressDisplayer = progressDisplayer;
-      minkowskiSumService = MinkowskiSum.CreateInstance(config, nestState);
+      minkowskiSumService = MinkowskiSum.CreateInstance(config, nestState, config);
       NestItems = nestItems;
       procreant = new Procreant(NestItems.PartsLocal, config, progressDisplayer);
+      Config = config;
     }
 
-    public static ISvgNestConfig Config { get; set; }
+    public ISvgNestConfig Config { get; set; }
 
     public bool IsStopped
     {
@@ -46,9 +50,9 @@
 
     private INestStateSvgNest State { get; }
 
-    internal static INfp CleanPolygon2(INfp polygon)
+    internal static INfp CleanPolygon2(INfp polygon, ISvgNestConfig config)
     {
-      List<IntPoint> p = SvgToClipper(polygon);
+      List<IntPoint> p = SvgToClipper(polygon, config);
 
       // remove self-intersections and find the biggest polygon that's left
       List<List<IntPoint>> simple = Clipper.SimplifyPolygon(p, PolyFillType.pftNonZero);
@@ -71,14 +75,14 @@
       }
 
       // clean up singularities, coincident points and edges
-      List<IntPoint> clean = Clipper.CleanPolygon(biggest, 0.01 * Config.CurveTolerance * Config.ClipperScale);
+      List<IntPoint> clean = Clipper.CleanPolygon(biggest, 0.01 * config.CurveTolerance * config.ClipperScale);
 
       if (clean == null || clean.Count == 0)
       {
         return null;
       }
 
-      NoFitPolygon cleaned = ClipperToSvg(clean);
+      NoFitPolygon cleaned = ClipperToSvg(clean, config);
 
       // remove duplicate endpoints
       SvgPoint start = cleaned[0];
@@ -103,7 +107,7 @@
       INfp[] offsetpaths = { simple };
       if (Math.Abs(offset) > 0)
       {
-        offsetpaths = PolygonOffsetDeepNest(simple, offset);
+        offsetpaths = PolygonOffsetDeepNest(simple, offset, config);
       }
 
       if (offsetpaths.Count() > 0)
@@ -143,38 +147,36 @@
 
     // use the clipper library to return an offset to the given polygon. Positive offset expands the polygon, negative contracts
     // note that this returns an array of polygons
-    internal static INfp[] PolygonOffsetDeepNest(INfp polygon, double offset)
+    internal static INfp[] PolygonOffsetDeepNest(INfp polygon, double offset, ISvgNestConfig config)
     {
       if (offset == 0 || GeometryUtil.AlmostEqual(offset, 0))
       {
         return new[] { polygon };
       }
-
-      List<IntPoint> p = SvgToClipper(polygon);
+      List<IntPoint> p = SvgToClipper(polygon, config);
 
       var miterLimit = 4;
-      ClipperOffset co = new(miterLimit, Config.CurveTolerance * Config.ClipperScale);
+      ClipperOffset co = new(miterLimit, config.CurveTolerance * config.ClipperScale);
       co.AddPath(p.ToList(), JoinType.jtMiter, EndType.etClosedPolygon);
 
       List<List<IntPoint>> newpaths = new();
-      co.Execute(ref newpaths, offset * Config.ClipperScale);
+      co.Execute(ref newpaths, offset * config.ClipperScale);
 
       List<NoFitPolygon> result = new();
       for (var i = 0; i < newpaths.Count; i++)
       {
-        result.Add(ClipperToSvg(newpaths[i]));
+        result.Add(ClipperToSvg(newpaths[i], config));
       }
 
       return result.ToArray();
     }
 
-    internal static NoFitPolygon ClipperToSvg(IList<IntPoint> polygon)
+    internal static NoFitPolygon ClipperToSvg(IList<IntPoint> polygon, ISvgNestConfig config)
     {
       List<SvgPoint> ret = new();
-
       for (var i = 0; i < polygon.Count; i++)
       {
-        ret.Add(new SvgPoint(polygon[i].X / Config.ClipperScale, polygon[i].Y / Config.ClipperScale));
+        ret.Add(new SvgPoint(polygon[i].X / config.ClipperScale, polygon[i].Y / config.ClipperScale));
       }
 
       return new NoFitPolygon(ret);
@@ -338,9 +340,9 @@
     }
 
     // converts a polygon from normal double coordinates to integer coordinates used by clipper, as well as x/y -> X/Y
-    private static List<IntPoint> SvgToClipper(INfp polygon)
+    private static List<IntPoint> SvgToClipper(INfp polygon, ISvgNestConfig config)
     {
-      List<IntPoint> d = DeepNestClipper.ScaleUpPath(polygon.Points, Config.ClipperScale);
+      List<IntPoint> d = DeepNestClipper.ScaleUpPath(polygon.Points, config.ClipperScale);
       return d;
     }
 

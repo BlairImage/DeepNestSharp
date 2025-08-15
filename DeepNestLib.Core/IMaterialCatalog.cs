@@ -1,8 +1,8 @@
 ﻿namespace DeepNestLib
 {
+  using NestProject;
   using System.Collections.ObjectModel;
   using System.Threading.Tasks;
-  using NestProject;
 
   /// <summary>
   ///   Represents a catalog of materials.
@@ -19,8 +19,9 @@
     /// </summary>
     /// <param name="totalArea">The total area required.</param>
     /// <param name="material">The material to be used.</param>
+    /// <param name="config">The SVG nesting configuration.</param>
     /// <returns>The sheet load information for the best fit sheet.</returns>
-    ISheetLoadInfo SelectBestFitSheet(double totalArea, IMaterial material);
+    ISheetLoadInfo SelectBestFitSheet(double totalArea, IMaterial material, ISvgNestConfig config);
 
     /// <summary>
     ///   Asynchronously adds a material to the catalog.

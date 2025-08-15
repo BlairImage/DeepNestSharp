@@ -1,5 +1,11 @@
 ﻿namespace DeepNestLib
 {
+  using DeepNestLib.GeneticAlgorithm;
+  using DeepNestLib.IO;
+  using DeepNestLib.NestProject;
+  using DeepNestLib.Placement;
+  using IxMilia.Dxf;
+  using IxMilia.Dxf.Entities;
   using System;
   using System.Collections.Generic;
   using System.IO;
@@ -7,12 +13,6 @@
   using System.Text;
   using System.Text.Json;
   using System.Text.Json.Serialization;
-  using DeepNestLib.GeneticAlgorithm;
-  using DeepNestLib.IO;
-  using DeepNestLib.NestProject;
-  using DeepNestLib.Placement;
-  using IxMilia.Dxf;
-  using IxMilia.Dxf.Entities;
 
   public class NoFitPolygon : PolygonBase, INfp, IHiddenNfp, IStringify
   {
@@ -300,9 +300,9 @@
     }
 
     /// <inheritdoc/>
-    public void Clean()
+    public void Clean(ISvgNestConfig config)
     {
-      var cleaned = SvgNest.CleanPolygon2(this);
+      var cleaned = SvgNest.CleanPolygon2(this, config);
       if (cleaned != null)
       {
         this.ReplacePoints(cleaned.Points);
@@ -310,7 +310,7 @@
 
       foreach (var child in this.Children)
       {
-        child.Clean();
+        child.Clean(config);
       }
     }
 
@@ -320,9 +320,9 @@
       this.points.Reverse();
     }
 
-    public bool Overlaps(INfp other)
+    public bool Overlaps(INfp other, ISvgNestConfig config)
     {
-      bool result = NfpSimplifier.IsIntersect(this, other, SvgNest.Config.ClipperScale);
+      bool result = NfpSimplifier.IsIntersect(this, other, config.ClipperScale);
       if (result)
       {
         if (other.Children.Count == 0)
@@ -335,7 +335,7 @@
           {
             if (hole.Children.Count == 0)
             {
-              if (NfpSimplifier.IsInnerContainedByOuter(this, hole))
+              if (NfpSimplifier.IsInnerContainedByOuter(this, hole, config))
               {
                 return false;
               }

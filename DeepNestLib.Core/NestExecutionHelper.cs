@@ -1,10 +1,10 @@
 ﻿namespace DeepNestLib
 {
+  using IO;
+  using NestProject;
   using System.Collections.Generic;
   using System.Diagnostics;
   using System.Linq;
-  using IO;
-  using NestProject;
 
   public class NestExecutionHelper
   {
@@ -27,16 +27,16 @@
       }
 
       // calc the total area of the sheets
-      var totalArea = rawDetails.Sum(detail => detail.ToNfp().Area * detail.Quantity * SvgNest.Config.Multiplier);
+      var totalArea = rawDetails.Sum(detail => detail.ToNfp().Area * detail.Quantity * context.Config.Multiplier);
       Debug.Print($"Total area of parts: {totalArea}");
 
       while (totalArea >= 0)
       {
-        ISheetLoadInfo bestFitSheet = m_materialCatalog.SelectBestFitSheet(totalArea, sheetLoadInfos.FirstOrDefault()?.Material);
+        ISheetLoadInfo bestFitSheet = m_materialCatalog.SelectBestFitSheet(totalArea, sheetLoadInfos.FirstOrDefault()?.Material, context.Config);
 
         var src = context.GetNextSheetSource();
 
-        var sheetArea = (bestFitSheet.Width - SvgNest.Config.SheetSpacing * 2) * (bestFitSheet.Height - SvgNest.Config.SheetSpacing * 2) * SvgNest.Config.PackingEfficiency;
+        var sheetArea = (bestFitSheet.Width - context.Config.SheetSpacing * 2) * (bestFitSheet.Height - context.Config.SheetSpacing * 2) * context.Config.PackingEfficiency;
         Debug.Print($"Sheet area: {sheetArea}");
         totalArea -= sheetArea;
         Sheet ns = Sheet.NewSheet(context.Sheets.Count + 1, bestFitSheet.Width, bestFitSheet.Height);
@@ -89,7 +89,7 @@
       {
         loadedNfp.IsPriority = item.IsPriority;
         loadedNfp.StrictAngle = item.StrictAngle;
-        var quantity = item.Quantity * (item.IsMultiplied ? SvgNest.Config.Multiplier : 1);
+        var quantity = item.Quantity * (item.IsMultiplied ? context.Config.Multiplier : 1);
         for (var i = 0; i < quantity; i++)
         {
           context.Polygons.Add(loadedNfp.Clone());

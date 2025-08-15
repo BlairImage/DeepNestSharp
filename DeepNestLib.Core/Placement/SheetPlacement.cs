@@ -1,5 +1,8 @@
 ﻿namespace DeepNestLib.Placement
 {
+  using DeepNestLib.GeneticAlgorithm;
+  using DeepNestLib.Geometry;
+  using DeepNestLib.IO;
   using System;
   using System.Collections.Generic;
   using System.IO;
@@ -7,9 +10,6 @@
   using System.Text.Json;
   using System.Text.Json.Serialization;
   using System.Threading.Tasks;
-  using DeepNestLib.GeneticAlgorithm;
-  using DeepNestLib.Geometry;
-  using DeepNestLib.IO;
 
   /// <summary>
   /// Represents a sheet that has had parts placed on it in the nest.
@@ -20,8 +20,9 @@
 
     private NoFitPolygon hull;
     private double clipperScale;
+    private ISvgNestConfig nestingConfig;
 
-    public SheetPlacement(PlacementTypeEnum placementType, ISheet sheet, IReadOnlyList<IPartPlacement> partPlacements, double mergedLength, double clipperScale)
+    public SheetPlacement(PlacementTypeEnum placementType, ISheet sheet, IReadOnlyList<IPartPlacement> partPlacements, double mergedLength, double clipperScale, ISvgNestConfig nestingConfig)
     {
       this.PlacementType = placementType;
       this.Sheet = sheet;
@@ -29,6 +30,7 @@
       this.MergedLength = mergedLength;
       this.clipperScale = clipperScale;
       this.Fitness = new OriginalFitnessSheet(this);
+      this.nestingConfig = nestingConfig;
     }
 
     /// <summary>
@@ -85,7 +87,7 @@
         _ = clipper.AddPaths(clipperNfp, ClipperLib.PolyType.ptSubject, true);
         _ = clipper.Execute(ClipperLib.ClipType.ctUnion, combinedNfp, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
 
-        return NfpSimplifier.SimplifyFunction(combinedNfp[0].ToArray().ToNestCoordinates(clipperScale), false, SvgNest.Config);
+        return NfpSimplifier.SimplifyFunction(combinedNfp[0].ToArray().ToNestCoordinates(clipperScale), false, nestingConfig);
       }
     }
 

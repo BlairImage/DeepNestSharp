@@ -1,9 +1,9 @@
 ﻿namespace DeepNestLib
 {
-  using System.Collections.Generic;
   using DeepNestLib.GeneticAlgorithm;
   using DeepNestLib.Placement;
   using IxMilia.Dxf;
+  using System.Collections.Generic;
 
   public interface INfp : IMinMaxXY, IPolygon, IPlacement
   {
@@ -39,7 +39,7 @@
     /// <summary>
     /// Cleans the points of the parent and all children, maintaining IsClosed state.
     /// </summary>
-    void Clean();
+    void Clean(ISvgNestConfig config);
 
     INfp Clone();
 
@@ -121,7 +121,7 @@
     /// <returns>A chromosome representing the part.</returns>
     Chromosome ToChromosome(double firstRotation);
 
-    bool Overlaps(INfp other);
+    bool Overlaps(INfp other, ISvgNestConfig config);
 
     INfp Slice(int v);
 

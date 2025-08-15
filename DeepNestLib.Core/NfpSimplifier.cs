@@ -34,14 +34,14 @@
       var hull = polygon.GetHull();
       if (!config.Simplify)
       {
-         /*
-         // use convex hull
-         var hull = new ConvexHullGrahamScan();
-         for(var i=0; i<polygon.length; i++){
-             hull.addPoint(polygon[i].x, polygon[i].y);
-         }
+        /*
+        // use convex hull
+        var hull = new ConvexHullGrahamScan();
+        for(var i=0; i<polygon.length; i++){
+            hull.addPoint(polygon[i].x, polygon[i].y);
+        }
 
-         return hull.getHull();*/
+        return hull.getHull();*/
 
         if (hull != null)
         {
@@ -53,7 +53,7 @@
         }
       }
 
-      var cleaned = SvgNest.CleanPolygon2(polygon);
+      var cleaned = SvgNest.CleanPolygon2(polygon, config);
       if (cleaned != null && cleaned.Length > 1)
       {
         polygon = cleaned;
@@ -98,7 +98,7 @@
         simple.ReplacePoints(simple.Points.Take(simple.Points.Count() - 1));
 
         // could be dirty again (self intersections and/or coincident points)
-        simple = SvgNest.CleanPolygon2(simple);
+        simple = SvgNest.CleanPolygon2(simple, config);
       }
 
       // simplification process reduced poly to a line or point; or it came back just as complex as the original
@@ -107,7 +107,7 @@
         simple = polygon;
       }
 
-      var offsets = SvgNest.PolygonOffsetDeepNest(simple, inside ? -tolerance : tolerance);
+      var offsets = SvgNest.PolygonOffsetDeepNest(simple, inside ? -tolerance : tolerance, config);
 
       INfp offset = null;
       double offsetArea = 0;
@@ -139,7 +139,7 @@
       {
         var delta = j * (tolerance / numshells);
         delta = inside ? -delta : delta;
-        var shell = SvgNest.PolygonOffsetDeepNest(simple, delta);
+        var shell = SvgNest.PolygonOffsetDeepNest(simple, delta, config);
         if (shell.Count() > 0)
         {
           shells[j] = shell.First();
@@ -172,7 +172,7 @@
           var test = offset.CloneTop();
           test.Points[i] = new SvgPoint(target.X, target.Y);
 
-          if (inside ? Interior(test, polygon) : Exterior(test, polygon))
+          if (inside ? Interior(test, polygon, config) : Exterior(test, polygon, config))
           {
             // a shell is an intermediate offset between simple and offset
             for (j = 1; j < numshells; j++)
@@ -184,7 +184,7 @@
                 target = GetTarget(o, shell, 2 * delta);
                 test = offset.CloneTop();
                 test.Points[i] = new SvgPoint(target.X, target.Y);
-                if (inside ? !Interior(test, polygon) : !Exterior(test, polygon))
+                if (inside ? !Interior(test, polygon, config) : !Exterior(test, polygon, config))
                 {
                   o.X = target.X;
                   o.Y = target.Y;
@@ -275,15 +275,15 @@
         }
       }
 
-      cleaned = SvgNest.CleanPolygon2(offset);
+      cleaned = SvgNest.CleanPolygon2(offset, config);
       if (cleaned != null && cleaned.Length > 1)
       {
         offset = cleaned;
       }
 
-      if (SvgNest.Config.ClipByHull)
+      if (config.ClipByHull)
       {
-        offset = ClipSubject(offset, hull, SvgNest.Config.ClipperScale);
+        offset = ClipSubject(offset, hull, config.ClipperScale);
       }
 
       if (markExact)
@@ -423,9 +423,9 @@
     /// <param name="simple"></param>
     /// <param name="complex"></param>
     /// <returns>.t if any complex vertices fall outside the simple polygon.</returns>
-    internal static bool Interior(INfp simple, INfp complex)
+    internal static bool Interior(INfp simple, INfp complex, ISvgNestConfig config)
     {
-      return TestBRelativeToA(simple, complex, p => p == Found.Inside || p == Found.OnPolygon);
+      return TestBRelativeToA(simple, complex, p => p == Found.Inside || p == Found.OnPolygon, config);
     }
 
     /// <summary>
@@ -435,9 +435,9 @@
     /// <param name="complex"></param>
     /// <param name="inside">Bool that flips the logic to test Interior.</param>
     /// <returns>.t if any complex vertices fall outside the simple polygon.</returns>
-    internal static bool Exterior(INfp simple, INfp complex)
+    internal static bool Exterior(INfp simple, INfp complex, ISvgNestConfig config)
     {
-      return TestBRelativeToA(simple, complex, p => p == Found.Outside);
+      return TestBRelativeToA(simple, complex, p => p == Found.Outside, config);
     }
 
     /// <summary>
@@ -447,12 +447,12 @@
     /// <param name="b"></param>
     /// <param name="test">Function to apply as test</param>
     /// <returns>.t if any complex vertices meet the test condition.</returns>
-    private static bool TestBRelativeToA(INfp a, INfp b, Func<Found, bool> test)
+    private static bool TestBRelativeToA(INfp a, INfp b, Func<Found, bool> test, ISvgNestConfig config)
     {
       for (var i = 0; i < b.Length; i++)
       {
         var vertex = b[i];
-        var pointInPolygon = PointInPolygon(vertex, a);
+        var pointInPolygon = PointInPolygon(vertex, a, config);
         if (test(pointInPolygon))
         {
           return true;
@@ -488,27 +488,27 @@
     /// <param name="point">Point to test.</param>
     /// <param name="polygon">Polygon within which to determine the lie of the points.</param>
     /// <returns>Whether the point falls within, without or on the polygon.</returns>
-    internal static Found PointInPolygon(SvgPoint point, INfp polygon)
+    internal static Found PointInPolygon(SvgPoint point, INfp polygon, ISvgNestConfig config)
     {
       // scaling is deliberately coarse to distinguish points that lie *on* the polygon
-      var p = SvgToClipper2(polygon, 1000);
+      var p = SvgToClipper2(polygon, config, 1000);
       var pt = new IntPoint(1000 * point.X, 1000 * point.Y);
 
       return (Found)Clipper.PointInPolygon(pt, p);
     }
 
-    internal static bool IsInnerContainedByOuter(INfp inner, INfp outer)
+    internal static bool IsInnerContainedByOuter(INfp inner, INfp outer, ISvgNestConfig config)
     {
       // scaling is deliberately coarse to filter out points that lie *on* the polygon
-      var innerClipper = ToOutPt(SvgToClipper2(inner));
-      var outerClipper = ToOutPt(SvgToClipper2(outer));
+      var innerClipper = ToOutPt(SvgToClipper2(inner, config));
+      var outerClipper = ToOutPt(SvgToClipper2(outer, config));
 
       return Clipper.Poly2ContainsPoly1(innerClipper, outerClipper);
     }
 
-    internal static OutPt ToOutPt(INfp nfp)
+    internal static OutPt ToOutPt(INfp nfp, ISvgNestConfig config)
     {
-      return ToOutPt(SvgToClipper2(nfp));
+      return ToOutPt(SvgToClipper2(nfp, config));
     }
 
     internal static OutPt ToOutPt(List<IntPoint> intPoints)
@@ -554,9 +554,9 @@
     }
 
     // returns a less complex polygon that satisfies the curve tolerance
-    private static INfp CleanPolygon(INfp polygon)
+    private static INfp CleanPolygon(INfp polygon, ISvgNestConfig config)
     {
-      var p = SvgToClipper2(polygon);
+      var p = SvgToClipper2(polygon, config);
 
       // remove self-intersections and find the biggest polygon that's left
       var simple = ClipperLib.Clipper.SimplifyPolygon(p, ClipperLib.PolyFillType.pftNonZero);
@@ -579,20 +579,20 @@
       }
 
       // clean up singularities, coincident points and edges
-      var clean = ClipperLib.Clipper.CleanPolygon(biggest, 0.01 * SvgNest.Config.CurveTolerance * SvgNest.Config.ClipperScale);
+      var clean = ClipperLib.Clipper.CleanPolygon(biggest, 0.01 * config.CurveTolerance * config.ClipperScale);
 
       if (clean == null || clean.Count == 0)
       {
         return null;
       }
 
-      return SvgNest.ClipperToSvg(clean);
+      return SvgNest.ClipperToSvg(clean, config);
     }
 
     // converts a polygon from normal double coordinates to integer coordinates used by clipper, as well as x/y -> X/Y
-    private static List<IntPoint> SvgToClipper2(INfp polygon, double? scale = null)
+    private static List<IntPoint> SvgToClipper2(INfp polygon, ISvgNestConfig config, double? scale = null)
     {
-      var d = DeepNestClipper.ScaleUpPath(polygon.Points, scale == null ? SvgNest.Config.ClipperScale : scale.Value);
+      var d = DeepNestClipper.ScaleUpPath(polygon.Points, scale == null ? config.ClipperScale : scale.Value);
       return d;
     }
 

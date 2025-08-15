@@ -1,5 +1,7 @@
 ﻿namespace DeepNestLib
 {
+  using IO;
+  using Placement;
   using System;
   using System.Collections.Generic;
   using System.ComponentModel;
@@ -7,12 +9,9 @@
   using System.Linq;
   using System.Threading.Tasks;
   using System.Xml.Linq;
-  using IO;
-  using Placement;
 
   public partial class NestingContext : INestingContext, INotifyPropertyChanged
   {
-    private readonly ISvgNestConfig config;
     private readonly IProgressDisplayer progressDisplayer;
     private readonly NestState state;
     private readonly INestStateBackground stateBackground;
@@ -26,7 +25,7 @@
       DispatcherService = dispatcherService;
       this.progressDisplayer = progressDisplayer;
       State = state;
-      this.config = config;
+      this.Config = config;
       this.state = state;
       stateNestingContext = state;
       stateBackground = state;
@@ -42,6 +41,8 @@
     public IList<ISheet> Sheets { get; } = new List<ISheet>();
 
     public INestResult Current { get; private set; }
+
+    public ISvgNestConfig Config { get; private set; }
 
     public SvgNest Nest
     {
@@ -60,9 +61,9 @@
       InternalReset();
       Current = null;
 
-      (NestItem<INfp>[] PartsLocal, List<NestItem<ISheet>> SheetsLocal) nestItems = await Task.Run(() => { return SvgNestInitializer.BuildNestItems(config, Polygons, Sheets, progressDisplayer); }).ConfigureAwait(false);
+      (NestItem<INfp>[] PartsLocal, List<NestItem<ISheet>> SheetsLocal) nestItems = await Task.Run(() => { return SvgNestInitializer.BuildNestItems(Config, Polygons, Sheets, progressDisplayer); }).ConfigureAwait(false);
 
-      Nest = new SvgNest(MessageService, progressDisplayer, state, config, nestItems);
+      Nest = new SvgNest(MessageService, progressDisplayer, state, Config, nestItems);
       isStopped = false;
     }
 
@@ -232,7 +233,7 @@
       XDocument d = XDocument.Load(v);
       XElement f = d.Descendants().First();
       var gap = int.Parse(f.Attribute("gap").Value);
-      SvgNest.Config.Spacing = gap;
+      Config.Spacing = gap;
 
       foreach (XElement item in d.Descendants("sheet"))
       {

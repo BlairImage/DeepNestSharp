@@ -1,12 +1,12 @@
 ﻿namespace DeepNestLib
 {
+  using DeepNestLib.GeneticAlgorithm;
+  using DeepNestLib.Placement;
+  using Light.GuardClauses;
   using System;
   using System.Collections.Generic;
   using System.Diagnostics;
   using System.Linq;
-  using DeepNestLib.GeneticAlgorithm;
-  using DeepNestLib.Placement;
-  using Light.GuardClauses;
 
   public class PlacementWorker : IPlacementWorker, ITestPlacementWorker
   {
@@ -19,9 +19,9 @@
     private readonly NfpHelper nfpHelper;
     private readonly IEnumerable<ISheet> sheets;
     private readonly DeepNestGene gene;
-    private readonly IPlacementConfig config;
     private readonly Stopwatch backgroundStopwatch;
     private readonly INestState state;
+    private ISvgNestConfig config;
     private Stopwatch sw;
     private Stack<ISheet> unusedSheets;
     private List<INfp> unplacedParts;
@@ -35,15 +35,15 @@
     /// <param name="gene">The list of parts to be placed.</param>
     /// <param name="config">Config for the Nest.</param>
     /// <param name="backgroundStopwatch">Stopwatch started at Background.Start (included the PMap stage prior to the PlacementWorker).</param>
-    public PlacementWorker(NfpHelper nfpHelper, IEnumerable<ISheet> sheets, DeepNestGene gene, IPlacementConfig config, Stopwatch backgroundStopwatch, INestState state)
+    public PlacementWorker(NfpHelper nfpHelper, IEnumerable<ISheet> sheets, DeepNestGene gene, ISvgNestConfig config, Stopwatch backgroundStopwatch, INestState state)
     {
       this.nfpHelper = nfpHelper;
       this.sheets = sheets;
       this.gene = gene;
       gene.Select(o => o.Part.Id).Distinct().Count().MustBe(gene.Length, message: "Parts must have unique Ids.");
-      this.config = config;
       this.backgroundStopwatch = backgroundStopwatch;
       this.state = state;
+      this.config = config;
     }
 
     PartPlacementWorker ITestPlacementWorker.LastPartPlacementWorker
@@ -101,7 +101,7 @@
         if (lastPartPlacementWorker.Placements != null && lastPartPlacementWorker.Placements.Count > 0)
         {
           VerboseLog($"Add {config.PlacementType} placement {sheet.ToShortString()}.");
-          allPlacements.Add(new SheetPlacement(config.PlacementType, sheet, lastPartPlacementWorker.Placements, lastPartPlacementWorker.MergedLength, config.ClipperScale));
+          allPlacements.Add(new SheetPlacement(config.PlacementType, sheet, lastPartPlacementWorker.Placements, lastPartPlacementWorker.MergedLength, config.ClipperScale, config));
         }
         else
         {
@@ -163,7 +163,7 @@
 #endif
         this.VerboseLog($"Placed part {processedPart}");
         placements.Add(position);
-        var sp = new SheetPlacement(placementType, sheet, placements, mergedLength, config.ClipperScale);
+        var sp = new SheetPlacement(placementType, sheet, placements, mergedLength, config.ClipperScale, config);
         if (double.IsNaN(sp.Fitness.Evaluate()))
         {
           // Step back to calling method in PartPlacementWorker and you should find a PartPlacementWorker.ToJson() :)

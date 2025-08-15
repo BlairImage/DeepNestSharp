@@ -17,13 +17,13 @@
     {
     }
 
-    public NfpCandidateList(INfp[] items, ISheet sheet, INfp part)
+    public NfpCandidateList(INfp[] items, ISheet sheet, INfp part, ISvgNestConfig config)
     {
       if (items != null)
       {
         foreach (var nfp in items)
         {
-          nfp.Clean();
+          nfp.Clean(config);
         }
       }
 
@@ -33,9 +33,9 @@
     }
 
     // inner NFP
-    internal NfpCandidateList(INfpHelper nfpHelper, ISheet sheet, INfp part, double clipperScale, bool useDllImport)
+    internal NfpCandidateList(INfpHelper nfpHelper, ISheet sheet, INfp part, ISvgNestConfig config, bool useDllImport)
     {
-      Items = nfpHelper.GetInnerNfp(sheet, part, MinkowskiCache.Cache, clipperScale, useDllImport, o => { }); // ?? new INfp[0];
+      Items = nfpHelper.GetInnerNfp(sheet, part, MinkowskiCache.Cache, config.ClipperScale, useDllImport, o => { }); // ?? new INfp[0];
       Sheet = sheet;
       Part = part;
     }

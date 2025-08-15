@@ -39,12 +39,12 @@
       this.clipCache = clipCache;
     }
 
-    public PartPlacementWorker(IPlacementWorker placementWorker, IPlacementConfig config, DeepNestGene gene, List<IPartPlacement> placements, ISheet sheet, NfpHelper nfpHelper, INestState state)
+    public PartPlacementWorker(IPlacementWorker placementWorker, ISvgNestConfig config, DeepNestGene gene, List<IPartPlacement> placements, ISheet sheet, NfpHelper nfpHelper, INestState state)
       : this(placementWorker, config, gene, placements, sheet, nfpHelper, new Dictionary<string, ClipCacheItem>(), state)
     {
     }
 
-    public PartPlacementWorker(IPlacementWorker placementWorker, IPlacementConfig config, DeepNestGene gene, List<IPartPlacement> placements, ISheet sheet, NfpHelper nfpHelper, Dictionary<string, ClipCacheItem> clipCache, INestState state)
+    public PartPlacementWorker(IPlacementWorker placementWorker, ISvgNestConfig config, DeepNestGene gene, List<IPartPlacement> placements, ISheet sheet, NfpHelper nfpHelper, Dictionary<string, ClipCacheItem> clipCache, INestState state)
     {
       this.clipCache = clipCache;
       this.state = state;
@@ -165,7 +165,7 @@
 
           return this.Placements.Count == 0
             ? ProcessFirstPartOnSheet(inputPart, inputPartIndex, processedPart)
-            : ProcessSecondaryPartOnSheet(inputPart, inputPartIndex, processedPart);
+            : ProcessSecondaryPartOnSheet(inputPart, inputPartIndex, processedPart, (ISvgNestConfig)Config);
         }
       }
       catch (Exception ex)
@@ -184,7 +184,7 @@
       }
     }
 
-    private InnerFlowResult ProcessSecondaryPartOnSheet(INfp inputPart, int inputPartIndex, INfp processedPart)
+    private InnerFlowResult ProcessSecondaryPartOnSheet(INfp inputPart, int inputPartIndex, INfp processedPart, ISvgNestConfig config)
     {
       this.VerboseLog("Already has a first placement.");
       this.VerboseLog($"Calculate placement #{this.Placements.Count} on SheetNfp");
@@ -251,7 +251,7 @@
                                           SheetPlacement.CombinedPoints(this.Placements));
         if (position != null)
         {
-          this.FinalNfp = new NfpCandidateList(finalNfp.ToArray(), this.Sheet, position.PlacedPart);
+          this.FinalNfp = new NfpCandidateList(finalNfp.ToArray(), this.Sheet, position.PlacedPart, config);
           this.SheetPlacement = this.AddPlacement(inputPart, processedPart, position, inputPartIndex);
           if (position.MergedLength.HasValue)
           {
@@ -477,7 +477,7 @@
       foreach (var prior in this.Placements)
       {
         var shiftedPrior = prior.PlacedPart;
-        if (proposed.Overlaps(shiftedPrior))
+        if (proposed.Overlaps(shiftedPrior, (ISvgNestConfig)Config))
         {
           return false;
         }
@@ -499,7 +499,7 @@
 
     private SheetNfp InitialiseSheetNfp(INfp processedPart)
     {
-      var result = new SheetNfp(this.NfpHelper, this.Sheet, processedPart, this.Config.ClipperScale, this.Config.UseDllImport, this.VerboseLog);
+      var result = new SheetNfp(this.NfpHelper, this.Sheet, processedPart, (ISvgNestConfig)this.Config, this.Config.UseDllImport, this.VerboseLog);
       this.VerboseLog($"SheetNfp has {result.NumberOfNfps}.Items");
       return result;
     }

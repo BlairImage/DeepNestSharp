@@ -1,14 +1,14 @@
 ﻿namespace DeepNestLib
 {
+  using ClipperLib;
+  using DeepNestLib.Geometry;
+  using DeepNestLib.Placement;
+  using Light.GuardClauses;
   using System;
   using System.Collections.Generic;
   using System.Linq;
   using System.Text;
   using System.Text.Json.Serialization;
-  using ClipperLib;
-  using DeepNestLib.Geometry;
-  using DeepNestLib.Placement;
-  using Light.GuardClauses;
 
   public class NfpHelper : INfpHelper, ITestNfpHelper
   {

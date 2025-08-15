@@ -1,15 +1,15 @@
 ﻿namespace DeepNestLib
 {
+  using DeepNestLib.GeneticAlgorithm;
+  using DeepNestLib.Geometry;
+  using DeepNestLib.PairMap;
+  using DeepNestLib.Placement;
   using System;
   using System.Collections.Generic;
   using System.Diagnostics;
   using System.Linq;
   using System.Runtime.InteropServices;
   using System.Threading.Tasks;
-  using DeepNestLib.GeneticAlgorithm;
-  using DeepNestLib.Geometry;
-  using DeepNestLib.PairMap;
-  using DeepNestLib.Placement;
 
   public class Background
   {
