@@ -20,8 +20,9 @@
     /// <param name="totalArea">The total area required.</param>
     /// <param name="material">The material to be used.</param>
     /// <param name="config">The SVG nesting configuration.</param>
+    /// <param name="packingEfficency">The packing efficiency to be used.</param>
     /// <returns>The sheet load information for the best fit sheet.</returns>
-    ISheetLoadInfo SelectBestFitSheet(double totalArea, IMaterial material, ISvgNestConfig config);
+    ISheetLoadInfo SelectBestFitSheet(double totalArea, IMaterial material, ISvgNestConfig config, double packingEfficency);
 
     /// <summary>
     ///   Asynchronously adds a material to the catalog.

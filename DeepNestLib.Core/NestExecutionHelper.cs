@@ -16,7 +16,16 @@
 
     public NestExecutionHelper(IMaterialCatalog materialCatalog) => m_materialCatalog = materialCatalog;
 
-    private void ReorderSheetsAndAddToContext<T>(NestingContext context, IList<T> rawDetails, IList<ISheetLoadInfo> sheetLoadInfos) where T : IRawDetail
+    /// <summary>
+    ///   Reorders the sheets based on their area and adds them to the nesting context until the total area of the raw details is covered.
+    /// </summary>
+    /// <typeparam name="T">The type of the raw detail.</typeparam>
+    /// <param name="context">The nesting context.</param>
+    /// <param name="rawDetails">The raw details to nest.</param>
+    /// <param name="sheetLoadInfos">The sheet load information.</param>
+    /// <param name="packingEfficiency">The packing efficiency.</param>
+    private void ReorderSheetsAndAddToContext<T>(NestingContext context, IList<T> rawDetails, IList<ISheetLoadInfo> sheetLoadInfos, double packingEfficiency)
+        where T : IRawDetail
     {
       // sort the sheet sizes by area (width * height) descending
       List<ISheetLoadInfo> orderedInfos = sheetLoadInfos.OrderByDescending(o => o.Width * o.Height).ToList();
@@ -32,11 +41,11 @@
 
       while (totalArea >= 0)
       {
-        ISheetLoadInfo bestFitSheet = m_materialCatalog.SelectBestFitSheet(totalArea, sheetLoadInfos.FirstOrDefault()?.Material, context.Config);
+        ISheetLoadInfo bestFitSheet = m_materialCatalog.SelectBestFitSheet(totalArea, sheetLoadInfos.FirstOrDefault()?.Material, context.Config, packingEfficiency);
 
         var src = context.GetNextSheetSource();
 
-        var sheetArea = (bestFitSheet.Width - context.Config.SheetSpacing * 2) * (bestFitSheet.Height - context.Config.SheetSpacing * 2) * context.Config.PackingEfficiency;
+        var sheetArea = (bestFitSheet.Width - context.Config.SheetSpacing * 2) * (bestFitSheet.Height - context.Config.SheetSpacing * 2) * packingEfficiency;
         Debug.Print($"Sheet area: {sheetArea}");
         totalArea -= sheetArea;
         Sheet ns = Sheet.NewSheet(context.Sheets.Count + 1, bestFitSheet.Width, bestFitSheet.Height);
@@ -51,11 +60,11 @@
       }
     }
 
-    public int InitialiseNest<T>(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<T> rawDetails, IProgressDisplayer progressDisplayer) where T : IRawDetail
+    public int InitialiseNest<T>(NestingContext context, IList<ISheetLoadInfo> sheetLoadInfos, IList<T> rawDetails, IProgressDisplayer progressDisplayer, double packingEfficiency) where T : IRawDetail
     {
       context.Reset();
 
-      ReorderSheetsAndAddToContext(context, rawDetails, sheetLoadInfos);
+      ReorderSheetsAndAddToContext(context, rawDetails, sheetLoadInfos, packingEfficiency);
 
       // progressDisplayer.DisplayTransientMessage(string.Empty);
       var src = 0;

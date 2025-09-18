@@ -83,7 +83,11 @@
     /// <summary>
     ///   When selecting sheets, the packing efficiency to use.
     /// </summary>
-    public double PackingEfficiency { get; set; }
+    public double PackingEfficiencyMax { get; set; }
+
+    public double PackingEfficiencyMin { get; set; }
+
+    public double AutoPackingEfficiencyStep { get; set; }
 
     public bool StrictAngleOverride { get; set; }
 
