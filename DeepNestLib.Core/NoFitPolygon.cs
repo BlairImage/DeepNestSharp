@@ -483,7 +483,14 @@
       INfp result;
       if (this is Sheet sheet)
       {
-        result = new Sheet(); //sheet, WithChildren.Included); //, WithChildren.Excluded);
+        var sheetClone = new Sheet();
+        sheetClone.Material = sheet.Material;
+        sheetClone.UniqueId = sheet.UniqueId;
+        sheetClone.Id = sheet.Id;
+        sheetClone.Source = sheet.Source;
+        sheetClone.Name = sheet.Name;
+        sheetClone.Rotation = sheet.Rotation;
+        result = sheetClone;
       }
       else
       {
@@ -712,8 +719,17 @@
     private NoFitPolygon CloneInstance()
     {
       NoFitPolygon result;
-      if (this is ISheet)
+      if (this is Sheet sheetSource)
       {
+        // Create a new Sheet instance so geometry is cloned below, then explicitly copy Sheet-specific properties
+        var sheetClone = new Sheet();
+        sheetClone.Material = sheetSource.Material;
+        sheetClone.UniqueId = sheetSource.UniqueId;
+        result = sheetClone;
+      }
+      else if (this is ISheet)
+      {
+        // Fallback for other ISheet implementations (if any) to at least construct a Sheet
         result = new Sheet();
       }
       else

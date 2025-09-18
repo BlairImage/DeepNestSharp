@@ -1,4 +1,4 @@
-﻿namespace DeepNestLib
+namespace DeepNestLib
 {
   using System.Text.Json;
 
@@ -11,10 +11,16 @@
     public Sheet(ISheet sheet, WithChildren withChildren) : base(sheet, withChildren)
     {
       this.Material = sheet.Material;
+      this.UniqueId = sheet.UniqueId;
     }
 
     public Sheet(INfp nfp, WithChildren withChildren) : base(nfp, withChildren)
     {
+      if (nfp is ISheet sheet)
+      {
+        this.Material = sheet.Material;
+        this.UniqueId = sheet.UniqueId;
+      }
     }
 
     public override string ToJson()
@@ -26,6 +32,7 @@
     }
 
     public IMaterial Material { get; set; }
+
     public string UniqueId { get; set; }
 
     /// <summary>
